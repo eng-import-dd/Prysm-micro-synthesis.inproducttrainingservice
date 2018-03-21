@@ -1,0 +1,51 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Synthesis.InProductTraining", "Synthesis.InProductTraining\Synthesis.InProductTraining.csproj", "{B53ACE50-2D25-11E8-859A-6722B1B6164A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B53ACE51-2D25-11E8-859A-6722B1B6164A} = {B53ACE51-2D25-11E8-859A-6722B1B6164A}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Synthesis.InProductTraining.Modules", "Synthesis.InProductTraining.Modules\Synthesis.InProductTraining.Modules.csproj", "{B53ACE51-2D25-11E8-859A-6722B1B6164A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Synthesis.InProductTraining.Modules.Test", "Synthesis.InProductTraining.Modules.Test\Synthesis.InProductTraining.Modules.Test.csproj", "{B53ACE52-2D25-11E8-859A-6722B1B6164A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B53ACE51-2D25-11E8-859A-6722B1B6164A} = {B53ACE51-2D25-11E8-859A-6722B1B6164A}
+	EndProjectSection
+EndProject
+Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "Synthesis.Application", "Synthesis.Application\Synthesis.Application.sfproj", "{B53ACE53-2D25-11E8-859A-6722B1B6164A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B53ACE50-2D25-11E8-859A-6722B1B6164A}.Debug|x64.ActiveCfg = Debug|x64
+		{B53ACE50-2D25-11E8-859A-6722B1B6164A}.Debug|x64.Build.0 = Debug|x64
+		{B53ACE50-2D25-11E8-859A-6722B1B6164A}.Release|x64.ActiveCfg = Release|x64
+		{B53ACE50-2D25-11E8-859A-6722B1B6164A}.Release|x64.Build.0 = Release|x64
+		{B53ACE51-2D25-11E8-859A-6722B1B6164A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B53ACE51-2D25-11E8-859A-6722B1B6164A}.Debug|x64.Build.0 = Debug|Any CPU
+		{B53ACE51-2D25-11E8-859A-6722B1B6164A}.Release|x64.ActiveCfg = Release|Any CPU
+		{B53ACE51-2D25-11E8-859A-6722B1B6164A}.Release|x64.Build.0 = Release|Any CPU
+		{B53ACE52-2D25-11E8-859A-6722B1B6164A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B53ACE52-2D25-11E8-859A-6722B1B6164A}.Debug|x64.Build.0 = Debug|Any CPU
+		{B53ACE52-2D25-11E8-859A-6722B1B6164A}.Release|x64.ActiveCfg = Release|Any CPU
+		{B53ACE52-2D25-11E8-859A-6722B1B6164A}.Release|x64.Build.0 = Release|Any CPU
+		{B53ACE53-2D25-11E8-859A-6722B1B6164A}.Debug|x64.ActiveCfg = Debug|x64
+		{B53ACE53-2D25-11E8-859A-6722B1B6164A}.Debug|x64.Build.0 = Debug|x64
+		{B53ACE53-2D25-11E8-859A-6722B1B6164A}.Debug|x64.Deploy.0 = Debug|x64
+		{B53ACE53-2D25-11E8-859A-6722B1B6164A}.Release|x64.ActiveCfg = Release|x64
+		{B53ACE53-2D25-11E8-859A-6722B1B6164A}.Release|x64.Build.0 = Release|x64
+		{B53ACE53-2D25-11E8-859A-6722B1B6164A}.Release|x64.Deploy.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3BD16232-DFA6-43A1-862C-025B67A13622}
+	EndGlobalSection
+EndGlobal
