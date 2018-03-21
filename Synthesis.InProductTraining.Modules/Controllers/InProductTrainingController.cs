@@ -43,7 +43,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             _logger = loggerFactory.GetLogger(this);
         }
 
-        public async Task<InProductTraining> CreateInProductTrainingAsync(InProductTraining model)
+        public async Task<InProductTraining> CreateInProductTrainingViewAsync(InProductTraining model)
         {
             var validationResult = _validatorLocator.Validate<InProductTrainingValidator>(model);
             if (!validationResult.IsValid)
@@ -58,32 +58,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             return result;
         }
 
-        public async Task DeleteInProductTrainingAsync(Guid id)
-        {
-            var validationResult = _validatorLocator.Validate<InProductTrainingIdValidator>(id);
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationFailedException(validationResult.Errors);
-            }
-
-            try
-            {
-                await _inProductTrainingRepository.DeleteItemAsync(id);
-
-                _eventService.Publish(new ServiceBusEvent<Guid>
-                {
-                    Name = EventNames.InProductTrainingDeleted,
-                    Payload = id
-                });
-            }
-            catch (DocumentNotFoundException)
-            {
-                // We don't really care if it's not found.
-                // The resource not being there is what we wanted.
-            }
-        }
-
-        public async Task<InProductTraining> GetInProductTrainingAsync(Guid id)
+        public async Task<InProductTraining> GetViewedInProductTrainingAsync(Guid id)
         {
             var validationResult = _validatorLocator.Validate<InProductTrainingIdValidator>(id);
             if (!validationResult.IsValid)
@@ -99,32 +74,6 @@ namespace Synthesis.InProductTrainingService.Controllers
             }
 
             return result;
-        }
-
-        public async Task<InProductTraining> UpdateInProductTrainingAsync(Guid inProductTrainingId, InProductTraining inProductTrainingModel)
-        {
-            var validationResult = _validatorLocator.ValidateMany(new Dictionary<Type, object>
-            {
-                { typeof(InProductTrainingIdValidator), inProductTrainingId },
-                { typeof(InProductTrainingValidator), inProductTrainingModel }
-            });
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationFailedException(validationResult.Errors);
-            }
-
-            try
-            {
-                var result = await _inProductTrainingRepository.UpdateItemAsync(inProductTrainingId, inProductTrainingModel);
-
-                _eventService.Publish(EventNames.InProductTrainingUpdated, result);
-
-                return result;
-            }
-            catch (DocumentNotFoundException)
-            {
-                throw new NotFoundException($"A InProductTraining resource could not be found for id {inProductTrainingId}");
-            }
         }
     }
 }

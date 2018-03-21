@@ -6,12 +6,7 @@ namespace Synthesis.InProductTrainingService.Controllers
 {
     public interface IInProductTrainingController
     {
-        Task<InProductTraining> CreateInProductTrainingAsync(InProductTraining model);
-
-        Task<InProductTraining> GetInProductTrainingAsync(Guid inProductTrainingId);
-
-        Task<InProductTraining> UpdateInProductTrainingAsync(Guid inProductTrainingId, InProductTraining model);
-
-        Task DeleteInProductTrainingAsync(Guid inProductTrainingId);
+        Task<InProductTraining> CreateInProductTrainingViewAsync(InProductTraining model);
+        Task<InProductTraining> GetViewedInProductTrainingAsync(Guid inProductTrainingId);
     }
 }
