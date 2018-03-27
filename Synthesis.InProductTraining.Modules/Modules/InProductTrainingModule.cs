@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,15 +12,17 @@ using Synthesis.Nancy.MicroService.Metadata;
 using Synthesis.Nancy.MicroService.Modules;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.PolicyEvaluator;
-using Synthesis.InProductTrainingService.Constants;
 using Synthesis.InProductTrainingService.Controllers;
-using Synthesis.InProductTrainingService.Models;
+using Synthesis.InProductTrainingService.InternalApi.Enums;
+using Synthesis.InProductTrainingService.InternalApi.Requests;
+using Synthesis.InProductTrainingService.InternalApi.Responses;
 
 namespace Synthesis.InProductTrainingService.Modules
 {
     public sealed class InProductTrainingModule : SynthesisModule
     {
         private readonly IInProductTrainingController _inProductTrainingController;
+        private const string BaseInProductTrainingUrl = "/v1/inproducttraining";
 
         public InProductTrainingModule(
             IInProductTrainingController inProductTrainingController,
@@ -32,91 +35,67 @@ namespace Synthesis.InProductTrainingService.Modules
 
             this.RequiresAuthentication();
 
-            // Initialize routes
-            CreateRoute("CreateInProductTrainingView", HttpMethod.Post, "/v1/inProductTraining/viewed", CreateInProductTrainingViewAsync)
-                .Description("Create a new InProductTraining viewed resource")
+            CreateRoute("CreateInProductTrainingView", HttpMethod.Post, $"{BaseInProductTrainingUrl}/viewed", CreateInProductTrainingViewAsync)
+                .Description("Create a new InProductTraining resource")
                 .StatusCodes(HttpStatusCode.Created, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError)
-                .RequestFormat(InProductTraining.Example())
-                .ResponseFormat(InProductTraining.Example());
+                .RequestFormat(InProductTrainingViewRequest.Example())
+                .ResponseFormat(InProductTrainingViewResponse.Example());
 
-            CreateRoute("GetViewedInProductTraining", HttpMethod.Get, $"/v1/inProductTraining/viewed/{{clientApplicationId}}", GetViewedInProductTrainingAsync)
-                .Description("Get an InProductTraining viewed resource by an associated clientApplicationId.")
+            CreateRoute("GetViewedInProductTraining", HttpMethod.Get, $"{BaseInProductTrainingUrl}/viewed/{{clientApplicationId:int}}", GetViewedInProductTrainingAsync)
+                .Description("Get a InProductTrainingView resource by it's identifier.")
                 .StatusCodes(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)
-                .ResponseFormat(InProductTraining.Example());
+                .ResponseFormat(InProductTrainingViewResponse.Example());
         }
 
         private async Task<object> CreateInProductTrainingViewAsync(dynamic input)
         {
-            InProductTraining newInProductTraining;
+            InProductTrainingViewRequest newInProductTrainingViewRequest;
             try
             {
-                newInProductTraining = this.Bind<InProductTraining>();
+                newInProductTrainingViewRequest = this.Bind<InProductTrainingViewRequest>();
             }
             catch (Exception ex)
             {
-                Logger.Error("Binding failed while attempting to create a InProductTraining resource", ex);
-                return Response.BadRequestBindingException();
+                Logger.Error("Binding failed while attempting to create a InProductTrainingView resource", ex);
+                return new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed };
             }
 
-            // Make sure this is called outside of our typical try/catch blocks because this will
-            // throw a special Nancy exception that will result in a 401 or 403 status code.
-            // If we were to put this in our try/catch below, it would come across as a 500
-            // instead, which is inaccurate.
-            await RequiresAccess()
-                .WithProjectIdExpansion(ctx => newInProductTraining.ProjectId)
-                .ExecuteAsync(CancellationToken.None);
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
 
             try
             {
-                var result = await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTraining);
-                return Negotiate
-                    .WithModel(result)
-                    .WithStatusCode(HttpStatusCode.Created);
-            }
-            catch (ValidationFailedException ex)
-            {
-                Logger.Error("Validation failed while attempting to create a InProductTraining resource", ex);
-                return Response.BadRequestValidationFailed(ex.Errors);
+                return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, TenantId);
             }
             catch (Exception ex)
             {
                 Logger.Error("Failed to create inProductTraining resource due to an error", ex);
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorCreateInProductTraining);
+                return new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed };
             }
         }
 
         private async Task<object> GetViewedInProductTrainingAsync(dynamic input)
         {
-            Guid id = input.id;
-            InProductTraining result;
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
 
             try
             {
-                result = await _inProductTrainingController.GetViewedInProductTrainingAsync(id);
+                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId);
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
-                Logger.Error($"Could not find a '{id}'");
-                return Response.NotFound(ResponseReasons.NotFoundInProductTraining);
+                Logger.Error($"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'", ex);
+                return new List<InProductTrainingViewResponse> { new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed } };
             }
             catch (ValidationFailedException ex)
             {
-                Logger.Error($"Validation failed while attempting to get '{id}'", ex);
-                return Response.BadRequestValidationFailed(ex.Errors);
+                Logger.Error($"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'", ex);
+                return new List<InProductTrainingViewResponse> { new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed } };
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failed to get '{id}'", ex);
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining);
+                Logger.Error($"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'", ex);
+                return new List<InProductTrainingViewResponse> { new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed } };
             }
-
-            // As an optimization we're getting the resource from the database first so we can use
-            // the ProjectId from the resource in the expansion below (with out re-getting it).
-            await RequiresAccess()
-                .WithProjectIdExpansion(ctx => result.ProjectId)
-                .ExecuteAsync(CancellationToken.None);
-
-            return result;
         }
     }
 }
