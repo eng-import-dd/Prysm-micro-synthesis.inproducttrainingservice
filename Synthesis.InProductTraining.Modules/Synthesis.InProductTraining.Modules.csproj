@@ -216,7 +216,7 @@
       <HintPath>..\packages\Synthesis.Http.Microservice.1.0.0-beta015\lib\net452\Synthesis.Http.Microservice.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.InProductTrainingService.InternalApi, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Synthesis.InProductTrainingService.InternalApi.1.0.0-beta004\lib\net452\Synthesis.InProductTrainingService.InternalApi.dll</HintPath>
+      <HintPath>..\packages\Synthesis.InProductTrainingService.InternalApi.1.0.0-beta007\lib\net452\Synthesis.InProductTrainingService.InternalApi.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.KeyManager, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.KeyManager.2.1.0-beta005\lib\net452\Synthesis.KeyManager.dll</HintPath>
@@ -329,8 +329,8 @@
     <Compile Include="Controllers\InProductTrainingController.cs" />
     <Compile Include="Controllers\IInProductTrainingController.cs" />
     <Compile Include="Data\SynthesisDataContext.cs" />
+    <Compile Include="Enums\CacheConnection.cs" />
     <Compile Include="Enums\ResultCode.cs" />
-    <Compile Include="Events\EventSubscriber.cs" />
     <Compile Include="Extensions\ResultCodeExtensions.cs" />
     <Compile Include="HttpClientConfiguration.cs" />
     <Compile Include="MicroserviceHttpClientResolver.cs" />

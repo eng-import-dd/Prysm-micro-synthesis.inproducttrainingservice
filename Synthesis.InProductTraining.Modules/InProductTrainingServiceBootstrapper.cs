@@ -38,7 +38,6 @@ using Synthesis.Owin.Security;
 using Synthesis.PolicyEvaluator.Autofac;
 using Synthesis.Serialization.Json;
 using Synthesis.InProductTrainingService.Controllers;
-using Synthesis.InProductTrainingService.Events;
 using Synthesis.InProductTrainingService.Modules;
 using Synthesis.InProductTrainingService.Owin;
 using Synthesis.Tracking;
@@ -347,11 +346,6 @@ namespace Synthesis.InProductTrainingService
         {
             // Event Service registration.
             builder.RegisterKafkaEventBusComponents(ServiceName);
-
-            builder
-                .RegisterType<EventSubscriber>()
-                .AsSelf()
-                .AutoActivate();
 
             builder
                 .RegisterType<EventHandlerLocator>()

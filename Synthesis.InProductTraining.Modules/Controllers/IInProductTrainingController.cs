@@ -9,6 +9,6 @@ namespace Synthesis.InProductTrainingService.Controllers
     public interface IInProductTrainingController
     {
         Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest model, Guid tenantId);
-        Task<List<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId);
+        Task<List<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid tennantId);
     }
 }

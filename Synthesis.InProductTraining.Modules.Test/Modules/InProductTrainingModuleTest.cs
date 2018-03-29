@@ -26,7 +26,7 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         public async void GetReturnsBadRequestWhenControllerThrowsValidationException()
         {
             _inProductTrainingControllerMock
-                .Setup(x => x.GetInProductTrainingAsync(It.IsAny<Guid>()))
+                .Setup(x => x.GetViewedInProductTrainingAsync(It.IsAny<int>(), It.IsAny<Guid>()))
                 .ThrowsAsync(new ValidationFailedException(new[] { new ValidationFailure("property name", "error") }));
 
             var actual = await UserTokenBrowser.Get($"/v1/inProductTraining/{Guid.NewGuid()}", BuildRequest);
@@ -51,7 +51,7 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         public async void GetReturnsInternalServerErrorWhenControllerThrowsException()
         {
             _inProductTrainingControllerMock
-                .Setup(x => x.GetInProductTrainingAsync(It.IsAny<Guid>()))
+                .Setup(x => x.GetViewedInProductTrainingAsync(It.IsAny<int>(), It.IsAny<Guid>()))
                 .ThrowsAsync(new Exception());
 
             var actual = await UserTokenBrowser.Get($"/v1/inProductTraining/{Guid.NewGuid()}", BuildRequest);
@@ -64,7 +64,7 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         public async void GetReturnsNotFoundWhenControllerThrowsNotFound()
         {
             _inProductTrainingControllerMock
-                .Setup(x => x.GetInProductTrainingAsync(It.IsAny<Guid>()))
+                .Setup(x => x.GetViewedInProductTrainingAsync(It.IsAny<int>(), It.IsAny<Guid>()))
                 .ThrowsAsync(new NotFoundException(""));
 
             var actual = await UserTokenBrowser.Get($"/v1/inProductTraining/{Guid.NewGuid()}", BuildRequest);

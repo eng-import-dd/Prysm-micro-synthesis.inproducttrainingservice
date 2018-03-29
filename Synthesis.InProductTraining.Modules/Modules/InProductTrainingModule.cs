@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IdentityModel;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +13,6 @@ using Synthesis.Nancy.MicroService.Modules;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.PolicyEvaluator;
 using Synthesis.InProductTrainingService.Controllers;
-using Synthesis.InProductTrainingService.InternalApi.Enums;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 
@@ -50,14 +49,17 @@ namespace Synthesis.InProductTrainingService.Modules
         private async Task<object> CreateInProductTrainingViewAsync(dynamic input)
         {
             InProductTrainingViewRequest newInProductTrainingViewRequest;
+            string errorMessage;
+
             try
             {
                 newInProductTrainingViewRequest = this.Bind<InProductTrainingViewRequest>();
             }
             catch (Exception ex)
             {
-                Logger.Error("Binding failed while attempting to create a InProductTrainingView resource", ex);
-                return new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed };
+                errorMessage = "Binding failed while attempting to create a InProductTrainingView resource";
+                Logger.Error(errorMessage, ex);
+                return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
             await RequiresAccess().ExecuteAsync(CancellationToken.None);
@@ -66,10 +68,23 @@ namespace Synthesis.InProductTrainingService.Modules
             {
                 return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, TenantId);
             }
+            catch (RequestFailedException ex)
+            {
+                errorMessage = "InProductTraining resource could not be created.";
+                Logger.Error(errorMessage, ex);
+                return Response.InternalServerError(errorMessage, ex.Message);
+            }
+            catch (NotFoundException ex)
+            {
+                errorMessage = "Requested inProductTraining resource could not be found.";
+                Logger.Error(errorMessage, ex);
+                return Response.NotFound(errorMessage, ex.Message);
+            }
             catch (Exception ex)
             {
-                Logger.Error("Failed to create inProductTraining resource due to an error", ex);
-                return new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed };
+                errorMessage = "Failed to create inProductTraining resource due to an error.";
+                Logger.Error(errorMessage, ex);
+                return Response.InternalServerError(errorMessage, ex.Message);
             }
         }
 
@@ -77,24 +92,29 @@ namespace Synthesis.InProductTrainingService.Modules
         {
             await RequiresAccess().ExecuteAsync(CancellationToken.None);
 
+            string errorMessage;
+
             try
             {
-                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId);
+                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, TenantId);
             }
             catch (NotFoundException ex)
             {
-                Logger.Error($"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'", ex);
-                return new List<InProductTrainingViewResponse> { new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed } };
+                errorMessage = $"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                Logger.Error(errorMessage, ex);
+                return Response.NotFound(errorMessage, ex.Message);
             }
             catch (ValidationFailedException ex)
             {
-                Logger.Error($"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'", ex);
-                return new List<InProductTrainingViewResponse> { new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed } };
+                errorMessage = $"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                Logger.Error(errorMessage, ex);
+                return Response.BadRequestValidationException(errorMessage, ex.Message);
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'", ex);
-                return new List<InProductTrainingViewResponse> { new InProductTrainingViewResponse { ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed } };
+                errorMessage = $"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                Logger.Error(errorMessage, ex);
+                return Response.InternalServerError(errorMessage, ex.Message);
             }
         }
     }

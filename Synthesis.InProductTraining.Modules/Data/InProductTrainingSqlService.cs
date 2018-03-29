@@ -12,7 +12,7 @@ namespace Synthesis.InProductTrainingService.Data
 {
     public class InProductTrainingSqlService
     {
-        public InProductTrainingViewResponse CreateInProductTrainingView(int inProductTrainingSubjectId, Guid userId, string title, int userTypeId, string createdByUserName)
+        public InProductTrainingViewResponse CreateInProductTrainingView(int inProductTrainingSubjectId, Guid userId, string title, int userTypeId, string createdByUserName, ref CreateInProductTrainingViewReturnCode returnCode)
         {
             try
             {
@@ -40,9 +40,9 @@ namespace Synthesis.InProductTrainingService.Data
                     result = dc.Database.SqlQuery<InProductTrainingViewResponse>("InsertInProductTrainingViews @InProductTrainingSubjectId, @UserID, @Title, @UserTypeId, @CreateUser, @ResultCode OUTPUT", inProductTrainingSubjectIdParam, userIdParam, titleParam, userTypeParam, createUserParam, resultCodeOutputParam).FirstOrDefault();
                 }
 
-                if (result != null && !Enum.TryParse(resultCodeOutputParam.Value.ToString(), out CreateInProductTrainingViewReturnCode returnCode))
+                if (!Enum.TryParse(resultCodeOutputParam.Value.ToString(), out returnCode))
                 {
-                    result.ReturnCode = CreateInProductTrainingViewReturnCode.CreateFailed;
+                    returnCode = CreateInProductTrainingViewReturnCode.CreateFailed;
                 }
 
                 return result;
@@ -56,7 +56,7 @@ namespace Synthesis.InProductTrainingService.Data
             }
         }
 
-        public async Task<List<InProductTrainingViewResponse>> GetInProductTrainingViewsAsync(Guid userId, int clientApplicationId)
+        public async Task<List<InProductTrainingViewResponse>> GetInProductTrainingViewsAsync(int clientApplicationId, Guid tenantId)
         {
             List<InProductTrainingViewResponse> trainingViews;
             try
@@ -65,13 +65,13 @@ namespace Synthesis.InProductTrainingService.Data
                 {
                     trainingViews = await sdc.InProductTrainingViews
                         .Include(s => s.InProductTrainingSubject)
-                        .Where(t => t.UserID == userId && t.InProductTrainingSubject.ClientApplicationID == clientApplicationId)
+                        .Where(t => t.UserId == tenantId && t.InProductTrainingSubject.ClientApplicationId == clientApplicationId)
                         .Select(v => new InProductTrainingViewResponse
                         {
-                            InProductTrainingSubjectId = v.InProductTrainingSubjectID,
-                            UserId = v.UserID,
+                            InProductTrainingSubjectId = v.InProductTrainingSubjectId,
+                            UserId = v.UserId,
                             Title = v.Title,
-                            ClientApplicationId = v.InProductTrainingSubject.ClientApplicationID,
+                            ClientApplicationId = v.InProductTrainingSubject.ClientApplicationId,
                             TrainingMethod = v.InProductTrainingSubject.TrainingMethod
                         })
                         .ToListAsync();
