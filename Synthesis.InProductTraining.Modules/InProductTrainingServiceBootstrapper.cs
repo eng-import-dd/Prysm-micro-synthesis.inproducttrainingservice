@@ -20,8 +20,6 @@ using Synthesis.Cache.Redis;
 using Synthesis.Configuration;
 using Synthesis.Configuration.Infrastructure;
 using Synthesis.Configuration.Shared;
-using Synthesis.DocumentStorage;
-using Synthesis.DocumentStorage.DocumentDB;
 using Synthesis.EventBus;
 using Synthesis.EventBus.Kafka.Autofac;
 using Synthesis.Http;
@@ -40,6 +38,7 @@ using Synthesis.Serialization.Json;
 using Synthesis.InProductTrainingService.Controllers;
 using Synthesis.InProductTrainingService.Modules;
 using Synthesis.InProductTrainingService.Owin;
+using Synthesis.TenantService.InternalApi.Api;
 using Synthesis.Tracking;
 using Synthesis.Tracking.ApplicationInsights;
 using Synthesis.Tracking.Web;
@@ -288,6 +287,9 @@ namespace Synthesis.InProductTrainingService
         /// <param name="builder"></param>
         private static void RegisterServiceSpecificRegistrations(ContainerBuilder builder)
         {
+            // Apis
+            builder.RegisterType<TenantApi>().As<ITenantApi>();
+
             // Controllers
             builder.RegisterType<InProductTrainingController>().As<IInProductTrainingController>();
         }

@@ -4,7 +4,6 @@ using System.IdentityModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Synthesis.Cache;
-//using Synthesis.EventBus;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService;
 //using Synthesis.Nancy.MicroService.Validation;
@@ -38,22 +37,18 @@ namespace Synthesis.InProductTrainingService.Controllers
         ///     Initializes a new instance of the <see cref="InProductTrainingController" /> class.
         /// </summary>
         ///// <param name="validatorLocator">The validator locator.</param>
-        ///// <param name="eventService">The event service.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="serializer"></param>
         /// <param name="cache"></param>
         /// <param name="tenantApi"></param>
         public InProductTrainingController(
-            //IRepositoryFactory repositoryFactory,
             //IValidatorLocator validatorLocator,
-            //IEventService eventService,
             ILoggerFactory loggerFactory,
             IObjectSerializer serializer,
             ICache cache,
             ITenantApi tenantApi)
         {
             //_validatorLocator = validatorLocator;
-            //_eventService = eventService;
             _logger = loggerFactory.GetLogger(this);
             _serializer = serializer;
             _cache = cache;
