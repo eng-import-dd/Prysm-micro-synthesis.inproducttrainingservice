@@ -4,7 +4,6 @@ using System.IdentityModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Synthesis.Cache;
-//using Synthesis.DocumentStorage;
 //using Synthesis.EventBus;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService;
@@ -28,7 +27,6 @@ namespace Synthesis.InProductTrainingService.Controllers
         //private readonly IEventService _eventService;
         // ReSharper disable once NotAccessedField.Local
         private readonly ILogger _logger;
-        //private readonly IRepository<InProductTrainingView> _inProductTrainingRepository;
         //private readonly IValidatorLocator _validatorLocator;
         private readonly IObjectSerializer _serializer;
         private readonly ICache _cache;
@@ -39,7 +37,6 @@ namespace Synthesis.InProductTrainingService.Controllers
         /// <summary>
         ///     Initializes a new instance of the <see cref="InProductTrainingController" /> class.
         /// </summary>
-        ///// <param name="repositoryFactory">The repository factory.</param>
         ///// <param name="validatorLocator">The validator locator.</param>
         ///// <param name="eventService">The event service.</param>
         /// <param name="loggerFactory">The logger factory.</param>
@@ -55,7 +52,6 @@ namespace Synthesis.InProductTrainingService.Controllers
             ICache cache,
             ITenantApi tenantApi)
         {
-            //_inProductTrainingRepository = repositoryFactory.CreateRepository<InProductTrainingView>();
             //_validatorLocator = validatorLocator;
             //_eventService = eventService;
             _logger = loggerFactory.GetLogger(this);

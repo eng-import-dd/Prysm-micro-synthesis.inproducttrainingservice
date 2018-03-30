@@ -180,17 +180,17 @@ namespace Synthesis.InProductTrainingService
                 .InstancePerRequest();
 
             // DocumentDB registration.
-            builder.Register(c =>
-            {
-                var settings = c.Resolve<IAppSettingsReader>();
-                return new DocumentDbContext
-                {
-                    AuthKey = settings.GetValue<string>("InProductTraining.DocumentDB.AuthKey"),
-                    Endpoint = settings.GetValue<string>("InProductTraining.DocumentDB.Endpoint"),
-                    DatabaseName = settings.GetValue<string>("InProductTraining.DocumentDB.DatabaseName")
-                };
-            });
-            builder.RegisterType<DocumentDbRepositoryFactory>().As<IRepositoryFactory>().SingleInstance();
+            //builder.Register(c =>
+            //{
+            //    var settings = c.Resolve<IAppSettingsReader>();
+            //    return new DocumentDbContext
+            //    {
+            //        AuthKey = settings.GetValue<string>("InProductTraining.DocumentDB.AuthKey"),
+            //        Endpoint = settings.GetValue<string>("InProductTraining.DocumentDB.Endpoint"),
+            //        DatabaseName = settings.GetValue<string>("InProductTraining.DocumentDB.DatabaseName")
+            //    };
+            //});
+            //builder.RegisterType<DocumentDbRepositoryFactory>().As<IRepositoryFactory>().SingleInstance();
 
             builder.Register(c =>
             {
