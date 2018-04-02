@@ -38,7 +38,7 @@ using Synthesis.Serialization.Json;
 using Synthesis.InProductTrainingService.Controllers;
 using Synthesis.InProductTrainingService.Modules;
 using Synthesis.InProductTrainingService.Owin;
-using Synthesis.TenantService.InternalApi.Api;
+using Synthesis.PrincipalService.InternalApi.Api;
 using Synthesis.Tracking;
 using Synthesis.Tracking.ApplicationInsights;
 using Synthesis.Tracking.Web;
@@ -275,7 +275,7 @@ namespace Synthesis.InProductTrainingService
         private static void RegisterServiceSpecificRegistrations(ContainerBuilder builder)
         {
             // Apis
-            builder.RegisterType<TenantApi>().As<ITenantApi>();
+            builder.RegisterType<UserApi>().As<IUserApi>();
 
             // Controllers
             builder.RegisterType<InProductTrainingController>().As<IInProductTrainingController>();

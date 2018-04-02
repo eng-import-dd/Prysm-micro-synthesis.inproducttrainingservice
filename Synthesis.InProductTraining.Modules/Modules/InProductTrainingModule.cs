@@ -66,7 +66,7 @@ namespace Synthesis.InProductTrainingService.Modules
 
             try
             {
-                return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, TenantId);
+                return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, PrincipalId);
             }
             catch (RequestFailedException ex)
             {
@@ -96,7 +96,7 @@ namespace Synthesis.InProductTrainingService.Modules
 
             try
             {
-                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, TenantId);
+                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, PrincipalId);
             }
             catch (NotFoundException ex)
             {

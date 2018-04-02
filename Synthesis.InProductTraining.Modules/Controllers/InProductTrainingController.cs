@@ -12,7 +12,7 @@ using Synthesis.InProductTrainingService.InternalApi.Enums;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.InProductTrainingService.Resolvers;
-using Synthesis.TenantService.InternalApi.Api;
+using Synthesis.PrincipalService.InternalApi.Api;
 using Synthesis.Serialization;
 
 namespace Synthesis.InProductTrainingService.Controllers
@@ -30,7 +30,7 @@ namespace Synthesis.InProductTrainingService.Controllers
         private readonly IObjectSerializer _serializer;
         private readonly ICache _cache;
         private readonly InProductTrainingSqlService _dbService;
-        private readonly ITenantApi _tenantApi;
+        private readonly IUserApi _userApi;
         private readonly TimeSpan _expirationTime = TimeSpan.FromHours(8);
 
         /// <summary>
@@ -40,13 +40,13 @@ namespace Synthesis.InProductTrainingService.Controllers
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="serializer"></param>
         /// <param name="cache"></param>
-        /// <param name="tenantApi"></param>
+        /// <param name="userApi"></param>
         public InProductTrainingController(
             //IValidatorLocator validatorLocator,
             ILoggerFactory loggerFactory,
             IObjectSerializer serializer,
             ICache cache,
-            ITenantApi tenantApi)
+            IUserApi userApi)
         {
             //_validatorLocator = validatorLocator;
             _logger = loggerFactory.GetLogger(this);
@@ -54,20 +54,20 @@ namespace Synthesis.InProductTrainingService.Controllers
             _cache = cache;
 
             _dbService = new InProductTrainingSqlService();
-            _tenantApi = tenantApi;
+            _userApi = userApi;
         }
 
-        public async Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest inProductTrainingViewRequest, Guid tenantId)
+        public async Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest inProductTrainingViewRequest, Guid userId)
         {
-            var createdByUserName = _tenantApi.GetTenantByIdAsync(tenantId).Result.Payload.Name;
-            var key = KeyResolver.InProductTrainingViews(tenantId, inProductTrainingViewRequest.ClientApplicationId);
+            var createdByUserName = _userApi.GetUserAsync(userId).Result.Payload.Username;
+            var key = KeyResolver.InProductTrainingViews(userId, inProductTrainingViewRequest.ClientApplicationId);
             var dtoForTrace = _serializer.SerializeToString(inProductTrainingViewRequest);
 
             var cachedData = await _cache.SetMembersAsync<InProductTrainingViewResponse>(key);
             var trainingOfType = cachedData?.Where(t =>
                     t.InProductTrainingSubjectId == inProductTrainingViewRequest.InProductTrainingSubjectId &&
                     t.Title == inProductTrainingViewRequest.Title &&
-                    t.UserId == tenantId)
+                    t.UserId == userId)
                 .FirstOrDefault();
 
             string returnMessage;
@@ -85,7 +85,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             // Database
             var returnCode = CreateInProductTrainingViewReturnCode.CreateFailed;
             var queryResult = _dbService.CreateInProductTrainingView(
-                inProductTrainingViewRequest.InProductTrainingSubjectId, tenantId,
+                inProductTrainingViewRequest.InProductTrainingSubjectId, userId,
                 inProductTrainingViewRequest.Title, inProductTrainingViewRequest.UserTypeId, createdByUserName, ref returnCode);
 
             switch (returnCode)
@@ -93,7 +93,7 @@ namespace Synthesis.InProductTrainingService.Controllers
                 case CreateInProductTrainingViewReturnCode.CreateSucceeded:
 
                     PopulateCache(queryResult, key, dtoForTrace);
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, tenantId);
+                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Info(returnMessage);
 
                     return queryResult;
@@ -101,51 +101,51 @@ namespace Synthesis.InProductTrainingService.Controllers
                 case CreateInProductTrainingViewReturnCode.RecordAlreadyExists:
 
                     PopulateCache(queryResult, key, dtoForTrace);
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, tenantId);
+                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Info(returnMessage);
 
                     throw new Exception(returnMessage);
 
                 case CreateInProductTrainingViewReturnCode.CreateFailed:
 
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, tenantId);
+                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Error(returnMessage);
 
                     throw new RequestFailedException(returnMessage);
 
                 case CreateInProductTrainingViewReturnCode.InProductTrainingSubjectNotFound:
 
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, tenantId);
+                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Warning(returnMessage);
 
                     throw new NotFoundException(returnMessage);
 
                 case CreateInProductTrainingViewReturnCode.UserNotFound:
 
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, tenantId);
+                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Warning(returnMessage);
 
                     throw new NotFoundException(returnMessage);
 
                 default:
 
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, tenantId);
+                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Warning(returnMessage);
 
                     throw new Exception();
-                }
+            }
         }
 
-        public async Task<List<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid tenantId)
+        public async Task<List<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId)
         {
             try
             {
-                var key = KeyResolver.InProductTrainingViews(tenantId, clientApplicationId);
-                var dbData = await _dbService.GetInProductTrainingViewsAsync(clientApplicationId, tenantId);
+                var key = KeyResolver.InProductTrainingViews(userId, clientApplicationId);
+                var dbData = await _dbService.GetInProductTrainingViewsAsync(clientApplicationId, userId);
 
                 var errorMessage =
                     $"{nameof(GetViewedInProductTrainingAsync)} - Unable to retrieve in-product training views from database. Args " +
-                    $"[{nameof(tenantId)}: {tenantId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
+                    $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
 
                 if (dbData != null)
                 {
@@ -166,7 +166,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             {
                 var errorMessage =
                     $"{nameof(GetViewedInProductTrainingAsync)} - Unable to retrieve in-product training views from database. Args " +
-                    $"[{nameof(tenantId)}: {tenantId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
+                    $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
 
                 _logger.Error($"{errorMessage}", ex);
                 throw new Exception(errorMessage, ex);

@@ -56,7 +56,7 @@ namespace Synthesis.InProductTrainingService.Data
             }
         }
 
-        public async Task<List<InProductTrainingViewResponse>> GetInProductTrainingViewsAsync(int clientApplicationId, Guid tenantId)
+        public async Task<List<InProductTrainingViewResponse>> GetInProductTrainingViewsAsync(int clientApplicationId, Guid userId)
         {
             List<InProductTrainingViewResponse> trainingViews;
             try
@@ -65,7 +65,7 @@ namespace Synthesis.InProductTrainingService.Data
                 {
                     trainingViews = await sdc.InProductTrainingViews
                         .Include(s => s.InProductTrainingSubject)
-                        .Where(t => t.UserId == tenantId && t.InProductTrainingSubject.ClientApplicationId == clientApplicationId)
+                        .Where(t => t.UserId == userId && t.InProductTrainingSubject.ClientApplicationId == clientApplicationId)
                         .Select(v => new InProductTrainingViewResponse
                         {
                             InProductTrainingSubjectId = v.InProductTrainingSubjectId,
