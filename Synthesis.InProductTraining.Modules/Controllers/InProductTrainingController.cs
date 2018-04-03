@@ -64,7 +64,6 @@ namespace Synthesis.InProductTrainingService.Controllers
 
             if (!validationResult.IsValid)
             {
-                _logger.Error("Validation failed while attempting to create an InProductTrainingView resource.");
                 throw new ValidationFailedException(validationResult.Errors);
             }
 
@@ -86,8 +85,6 @@ namespace Synthesis.InProductTrainingService.Controllers
                 returnMessage = $"{nameof(CreateInProductTrainingViewAsync)} -  Record not created because it already exists in cache. {dtoForTrace}";
 
                 _logger.Info(returnMessage);
-
-                throw new Exception(returnMessage);
             }
 
             // Database
@@ -105,9 +102,6 @@ namespace Synthesis.InProductTrainingService.Controllers
                         PopulateCache(queryResult, key, dtoForTrace);
                     }
 
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Info(returnMessage);
-
                     return queryResult;
 
                 case CreateInProductTrainingViewReturnCode.RecordAlreadyExists:
@@ -118,28 +112,24 @@ namespace Synthesis.InProductTrainingService.Controllers
                     }
 
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Info(returnMessage);
 
                     throw new Exception(returnMessage);
 
                 case CreateInProductTrainingViewReturnCode.CreateFailed:
 
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Error(returnMessage);
 
                     throw new RequestFailedException(returnMessage);
 
                 case CreateInProductTrainingViewReturnCode.InProductTrainingSubjectNotFound:
 
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Warning(returnMessage);
 
                     throw new NotFoundException(returnMessage);
 
                 case CreateInProductTrainingViewReturnCode.UserNotFound:
 
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Warning(returnMessage);
 
                     throw new NotFoundException(returnMessage);
 
@@ -158,7 +148,6 @@ namespace Synthesis.InProductTrainingService.Controllers
 
             if (!validationResult.IsValid)
             {
-                _logger.Error("Validation failed while attempting to create an InProductTrainingView resource.");
                 throw new ValidationFailedException(validationResult.Errors);
             }
 
@@ -206,9 +195,7 @@ namespace Synthesis.InProductTrainingService.Controllers
                         $"{nameof(GetViewedInProductTrainingAsync)} - Unable to retrieve in-product training views from database. Args " +
                         $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
 
-                    _logger.Error($"{nameof(GetViewedInProductTrainingAsync)} - {errorMessage}");
-
-                    throw new Exception();
+                    throw new Exception(errorMessage);
                 }
 
                 return dbData;
@@ -218,8 +205,6 @@ namespace Synthesis.InProductTrainingService.Controllers
                 var errorMessage =
                     $"{nameof(GetViewedInProductTrainingAsync)} - Unable to retrieve in-product training views from database. Args " +
                     $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
-
-                _logger.Error($"{errorMessage}", ex);
 
                 throw new Exception(errorMessage, ex);
             }
