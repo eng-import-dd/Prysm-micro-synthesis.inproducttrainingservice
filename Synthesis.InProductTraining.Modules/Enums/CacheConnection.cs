@@ -3,7 +3,5 @@
     public enum CacheConnection
     {
         General,
-        Refresh,
-        KEN
     }
 }
