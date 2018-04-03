@@ -7,8 +7,8 @@ namespace Synthesis.InProductTrainingService.Validators
     {
         public ClientApplicationIdValidator()
         {
-            RuleFor(request => request)
-                .NotEmpty().WithMessage("The ClientApplicationId property must not be empty");
+            //RuleFor(request => request)
+                //.NotEmpty().WithMessage("The ClientApplicationId property must not be empty");
         }
     }
 }

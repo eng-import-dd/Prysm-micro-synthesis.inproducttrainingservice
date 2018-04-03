@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Nancy;
 using Nancy.ModelBinding;
 using Nancy.Security;
+using Synthesis.InProductTrainingService.Constants;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Metadata;
@@ -15,6 +16,7 @@ using Synthesis.PolicyEvaluator;
 using Synthesis.InProductTrainingService.Controllers;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
+using Synthesis.Nancy.MicroService.Constants;
 
 namespace Synthesis.InProductTrainingService.Modules
 {
@@ -68,29 +70,29 @@ namespace Synthesis.InProductTrainingService.Modules
             {
                 return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, PrincipalId);
             }
+            catch (NotFoundException ex)
+            {
+                errorMessage = "Requested inProductTraining resource could not be found.";
+                Logger.Error(errorMessage, ex);
+                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
+            }
             catch (ValidationFailedException ex)
             {
                 errorMessage = "The InProductTraining payload is invalid.";
                 Logger.Error(errorMessage, ex);
-                return Response.InternalServerError(errorMessage, ex.Message);
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
             }
             catch (RequestFailedException ex)
             {
                 errorMessage = "InProductTraining resource could not be created.";
                 Logger.Error(errorMessage, ex);
-                return Response.InternalServerError(errorMessage, ex.Message);
-            }
-            catch (NotFoundException ex)
-            {
-                errorMessage = "Requested inProductTraining resource could not be found.";
-                Logger.Error(errorMessage, ex);
-                return Response.NotFound(errorMessage, ex.Message);
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
             catch (Exception ex)
             {
                 errorMessage = "Failed to create inProductTraining resource due to an error.";
                 Logger.Error(errorMessage, ex);
-                return Response.InternalServerError(errorMessage, ex.Message);
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
         }
 
@@ -108,19 +110,19 @@ namespace Synthesis.InProductTrainingService.Modules
             {
                 errorMessage = $"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
                 Logger.Error(errorMessage, ex);
-                return Response.NotFound(errorMessage, ex.Message);
+                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
             }
             catch (ValidationFailedException ex)
             {
                 errorMessage = $"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
                 Logger.Error(errorMessage, ex);
-                return Response.BadRequestValidationException(errorMessage, ex.Message);
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
             }
             catch (Exception ex)
             {
                 errorMessage = $"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
                 Logger.Error(errorMessage, ex);
-                return Response.InternalServerError(errorMessage, ex.Message);
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
         }
     }
