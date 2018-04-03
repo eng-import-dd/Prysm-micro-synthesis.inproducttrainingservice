@@ -150,7 +150,7 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         [Fact]
         public async void CreateGetReturnsOk()
         {
-            var actual = await UserTokenBrowser.Post("/v1/inproducttraining/viewed/{_defaultClientApplicationId}", BuildRequest);
+            var actual = await UserTokenBrowser.Post("/v1/inproducttraining/viewed", BuildRequest);
 
             Assert.Equal(HttpStatusCode.OK, actual.StatusCode);
         }
