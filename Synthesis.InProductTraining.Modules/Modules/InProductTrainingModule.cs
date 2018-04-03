@@ -68,6 +68,12 @@ namespace Synthesis.InProductTrainingService.Modules
             {
                 return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, PrincipalId);
             }
+            catch (ValidationFailedException ex)
+            {
+                errorMessage = "The InProductTraining payload is invalid.";
+                Logger.Error(errorMessage, ex);
+                return Response.InternalServerError(errorMessage, ex.Message);
+            }
             catch (RequestFailedException ex)
             {
                 errorMessage = "InProductTraining resource could not be created.";

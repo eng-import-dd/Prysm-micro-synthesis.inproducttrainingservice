@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using Synthesis.Cache;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService;
-//using Synthesis.Nancy.MicroService.Validation;
+using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.InProductTrainingService.Data;
 using Synthesis.InProductTrainingService.InternalApi.Enums;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.InProductTrainingService.Resolvers;
+using Synthesis.InProductTrainingService.Validators;
 using Synthesis.PrincipalService.InternalApi.Api;
 using Synthesis.Serialization;
 
@@ -26,7 +27,7 @@ namespace Synthesis.InProductTrainingService.Controllers
         //private readonly IEventService _eventService;
         // ReSharper disable once NotAccessedField.Local
         private readonly ILogger _logger;
-        //private readonly IValidatorLocator _validatorLocator;
+        private readonly IValidatorLocator _validatorLocator;
         private readonly IObjectSerializer _serializer;
         private readonly ICache _cache;
         private readonly InProductTrainingSqlService _dbService;
@@ -36,19 +37,19 @@ namespace Synthesis.InProductTrainingService.Controllers
         /// <summary>
         ///     Initializes a new instance of the <see cref="InProductTrainingController" /> class.
         /// </summary>
-        ///// <param name="validatorLocator">The validator locator.</param>
+        /// <param name="validatorLocator">The validator locator.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="serializer"></param>
         /// <param name="cache"></param>
         /// <param name="userApi"></param>
         public InProductTrainingController(
-            //IValidatorLocator validatorLocator,
+            IValidatorLocator validatorLocator,
             ILoggerFactory loggerFactory,
             IObjectSerializer serializer,
             ICache cache,
             IUserApi userApi)
         {
-            //_validatorLocator = validatorLocator;
+            _validatorLocator = validatorLocator;
             _logger = loggerFactory.GetLogger(this);
             _serializer = serializer;
             _cache = cache;
@@ -59,6 +60,14 @@ namespace Synthesis.InProductTrainingService.Controllers
 
         public async Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest inProductTrainingViewRequest, Guid userId)
         {
+            var validationResult = _validatorLocator.Validate<InProductTrainingViewRequestValidator>(inProductTrainingViewRequest);
+
+            if (!validationResult.IsValid)
+            {
+                _logger.Error("Validation failed while attempting to create an InProductTrainingView resource.");
+                throw new ValidationFailedException(validationResult.Errors);
+            }
+
             var createdByUserName = _userApi.GetUserAsync(userId).Result.Payload.Username;
             var key = KeyResolver.InProductTrainingViews(userId, inProductTrainingViewRequest.ClientApplicationId);
             var dtoForTrace = _serializer.SerializeToString(inProductTrainingViewRequest);
@@ -145,6 +154,14 @@ namespace Synthesis.InProductTrainingService.Controllers
 
         public async Task<List<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId)
         {
+            var validationResult = _validatorLocator.Validate<ClientApplicationIdValidator>(clientApplicationId);
+
+            if (!validationResult.IsValid)
+            {
+                _logger.Error("Validation failed while attempting to create an InProductTrainingView resource.");
+                throw new ValidationFailedException(validationResult.Errors);
+            }
+
             try
             {
                 var key = KeyResolver.InProductTrainingViews(userId, clientApplicationId);

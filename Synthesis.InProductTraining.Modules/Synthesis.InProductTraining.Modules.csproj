@@ -344,9 +344,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resolvers\KeyResolver.cs" />
     <Compile Include="Data\InProductTrainingSqlService.cs" />
+    <Compile Include="Validators\ClientApplicationIdValidator.cs" />
     <Compile Include="Validators\InProductTrainingIdValidator.cs" />
     <Compile Include="Validators\InProductTrainingValidator.cs" />
     <Compile Include="Validators\GuidValidator.cs" />
+    <Compile Include="Validators\InProductTrainingViewRequestValidator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
