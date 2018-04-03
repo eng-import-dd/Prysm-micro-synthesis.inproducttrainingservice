@@ -62,6 +62,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             var createdByUserName = _userApi.GetUserAsync(userId).Result.Payload.Username;
             var key = KeyResolver.InProductTrainingViews(userId, inProductTrainingViewRequest.ClientApplicationId);
             var dtoForTrace = _serializer.SerializeToString(inProductTrainingViewRequest);
+            string returnMessage;
 
             var cachedData = await _cache.SetMembersAsync<InProductTrainingViewResponse>(key);
             var trainingOfType = cachedData?.Where(t =>
@@ -70,13 +71,11 @@ namespace Synthesis.InProductTrainingService.Controllers
                     t.UserId == userId)
                 .FirstOrDefault();
 
-            string returnMessage;
-
-            // If the key already exists in cache, throw the exception
             if (trainingOfType != null)
             {
                 PopulateCache(trainingOfType, key, dtoForTrace);
                 returnMessage = $"{nameof(CreateInProductTrainingViewAsync)} -  Record not created because it already exists in cache. {dtoForTrace}";
+
                 _logger.Info(returnMessage);
 
                 throw new Exception(returnMessage);
@@ -92,7 +91,11 @@ namespace Synthesis.InProductTrainingService.Controllers
             {
                 case CreateInProductTrainingViewReturnCode.CreateSucceeded:
 
-                    PopulateCache(queryResult, key, dtoForTrace);
+                    if (queryResult != null)
+                    {
+                        PopulateCache(queryResult, key, dtoForTrace);
+                    }
+
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Info(returnMessage);
 
@@ -100,7 +103,11 @@ namespace Synthesis.InProductTrainingService.Controllers
 
                 case CreateInProductTrainingViewReturnCode.RecordAlreadyExists:
 
-                    PopulateCache(queryResult, key, dtoForTrace);
+                    if (queryResult != null)
+                    {
+                        PopulateCache(queryResult, key, dtoForTrace);
+                    }
+
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
                     _logger.Info(returnMessage);
 
@@ -130,7 +137,7 @@ namespace Synthesis.InProductTrainingService.Controllers
                 default:
 
                     returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Warning(returnMessage);
+                    _logger.Error(returnMessage);
 
                     throw new Exception();
             }
@@ -141,26 +148,53 @@ namespace Synthesis.InProductTrainingService.Controllers
             try
             {
                 var key = KeyResolver.InProductTrainingViews(userId, clientApplicationId);
-                var dbData = await _dbService.GetInProductTrainingViewsAsync(clientApplicationId, userId);
 
-                var errorMessage =
-                    $"{nameof(GetViewedInProductTrainingAsync)} - Unable to retrieve in-product training views from database. Args " +
-                    $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
+                if (await _cache.KeyExistsAsync(key))
+                {
+                    var cachedData = await _cache.SetMembersAsync<InProductTrainingViewResponse>(key);
+
+                    if (cachedData != null)
+                    {
+                        _logger.Info($"{nameof(GetViewedInProductTrainingAsync)} - Item retrieved from cache for key {key}.");
+                        return cachedData.ToList();
+                    }
+                }
+
+                var dbData = await _dbService.GetInProductTrainingViewsAsync(clientApplicationId, userId);
 
                 if (dbData != null)
                 {
                     if (dbData.Any())
                     {
                         _logger.Info($"{nameof(GetViewedInProductTrainingAsync)} - Records retrieved from dB for key {key}.");
-                        return dbData;
+
+                        if (await _cache.SetAddAsync(key, dbData) > 0 || await _cache.KeyExistsAsync(key))
+                        {
+                            _logger.Info($"{nameof(GetViewedInProductTrainingAsync)} - Succesfully cached an item in the set for key '{key}'.");
+
+                            if (!await _cache.KeyExpireAsync(key, _expirationTime, CacheCommandOptions.None))
+                            {
+                                _logger.Info($"{nameof(GetViewedInProductTrainingAsync)} - Could not set cache expiration for the key '{key}' or the key does not exist.");
+                            }
+                        }
+                        else
+                        {
+                            _logger.Error($"{nameof(GetViewedInProductTrainingAsync)} - Could not cache an item in the set for '{key}'.");
+                        }
                     }
+                }
+                else
+                {
+                    var errorMessage =
+                        $"{nameof(GetViewedInProductTrainingAsync)} - Unable to retrieve in-product training views from database. Args " +
+                        $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
 
                     _logger.Error($"{nameof(GetViewedInProductTrainingAsync)} - {errorMessage}");
-                    throw new NotFoundException(errorMessage);
+
+                    throw new Exception();
                 }
 
-                _logger.Error($"{nameof(GetViewedInProductTrainingAsync)} - {errorMessage}");
-                throw new NotFoundException(errorMessage);
+                return dbData;
             }
             catch (Exception ex)
             {
@@ -169,6 +203,7 @@ namespace Synthesis.InProductTrainingService.Controllers
                     $"[{nameof(userId)}: {userId}, {nameof(clientApplicationId)}: {clientApplicationId}]";
 
                 _logger.Error($"{errorMessage}", ex);
+
                 throw new Exception(errorMessage, ex);
             }
         }
