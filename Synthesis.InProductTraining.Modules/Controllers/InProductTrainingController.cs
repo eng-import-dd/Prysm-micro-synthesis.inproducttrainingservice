@@ -148,7 +148,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             }
         }
 
-        public async Task<List<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId)
+        public async Task<IEnumerable<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId)
         {
             var validationResult = _validatorLocator.Validate<ClientApplicationIdValidator>(clientApplicationId);
 
