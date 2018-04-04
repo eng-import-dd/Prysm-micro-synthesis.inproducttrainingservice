@@ -20,8 +20,6 @@ using Synthesis.Cache.Redis;
 using Synthesis.Configuration;
 using Synthesis.Configuration.Infrastructure;
 using Synthesis.Configuration.Shared;
-using Synthesis.DocumentStorage;
-using Synthesis.DocumentStorage.DocumentDB;
 using Synthesis.EventBus;
 using Synthesis.EventBus.Kafka.Autofac;
 using Synthesis.Http;
@@ -38,9 +36,9 @@ using Synthesis.Owin.Security;
 using Synthesis.PolicyEvaluator.Autofac;
 using Synthesis.Serialization.Json;
 using Synthesis.InProductTrainingService.Controllers;
-using Synthesis.InProductTrainingService.Events;
 using Synthesis.InProductTrainingService.Modules;
 using Synthesis.InProductTrainingService.Owin;
+using Synthesis.PrincipalService.InternalApi.Api;
 using Synthesis.Tracking;
 using Synthesis.Tracking.ApplicationInsights;
 using Synthesis.Tracking.Web;
@@ -180,19 +178,6 @@ namespace Synthesis.InProductTrainingService
                     (p, c) => c.Resolve<IAppSettingsReader>().GetValue<string>("Tenant.Url")))
                 .InstancePerRequest();
 
-            // DocumentDB registration.
-            builder.Register(c =>
-            {
-                var settings = c.Resolve<IAppSettingsReader>();
-                return new DocumentDbContext
-                {
-                    AuthKey = settings.GetValue<string>("InProductTraining.DocumentDB.AuthKey"),
-                    Endpoint = settings.GetValue<string>("InProductTraining.DocumentDB.Endpoint"),
-                    DatabaseName = settings.GetValue<string>("InProductTraining.DocumentDB.DatabaseName")
-                };
-            });
-            builder.RegisterType<DocumentDbRepositoryFactory>().As<IRepositoryFactory>().SingleInstance();
-
             builder.Register(c =>
             {
                 var reader = c.ResolveKeyed<IAppSettingsReader>(nameof(DefaultAppSettingsReader));
@@ -289,6 +274,9 @@ namespace Synthesis.InProductTrainingService
         /// <param name="builder"></param>
         private static void RegisterServiceSpecificRegistrations(ContainerBuilder builder)
         {
+            // Apis
+            builder.RegisterType<UserApi>().As<IUserApi>();
+
             // Controllers
             builder.RegisterType<InProductTrainingController>().As<IInProductTrainingController>();
         }
@@ -347,11 +335,6 @@ namespace Synthesis.InProductTrainingService
         {
             // Event Service registration.
             builder.RegisterKafkaEventBusComponents(ServiceName);
-
-            builder
-                .RegisterType<EventSubscriber>()
-                .AsSelf()
-                .AutoActivate();
 
             builder
                 .RegisterType<EventHandlerLocator>()

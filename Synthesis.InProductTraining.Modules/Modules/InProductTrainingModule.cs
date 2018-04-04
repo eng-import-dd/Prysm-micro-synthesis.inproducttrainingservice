@@ -1,25 +1,29 @@
-using System;
+﻿using System;
+using System.IdentityModel;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Nancy;
 using Nancy.ModelBinding;
 using Nancy.Security;
+using Synthesis.InProductTrainingService.Constants;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Metadata;
 using Synthesis.Nancy.MicroService.Modules;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.PolicyEvaluator;
-using Synthesis.InProductTrainingService.Constants;
 using Synthesis.InProductTrainingService.Controllers;
-using Synthesis.InProductTrainingService.Models;
+using Synthesis.InProductTrainingService.InternalApi.Requests;
+using Synthesis.InProductTrainingService.InternalApi.Responses;
+using Synthesis.Nancy.MicroService.Constants;
 
 namespace Synthesis.InProductTrainingService.Modules
 {
     public sealed class InProductTrainingModule : SynthesisModule
     {
         private readonly IInProductTrainingController _inProductTrainingController;
+        private const string BaseInProductTrainingUrl = "/v1/inproducttraining";
 
         public InProductTrainingModule(
             IInProductTrainingController inProductTrainingController,
@@ -32,178 +36,86 @@ namespace Synthesis.InProductTrainingService.Modules
 
             this.RequiresAuthentication();
 
-            // CRUD routes
-            CreateRoute("CreateInProductTraining", HttpMethod.Post, "/v1/inProductTraining", CreateInProductTrainingAsync)
+            CreateRoute("CreateInProductTrainingView", HttpMethod.Post, $"{BaseInProductTrainingUrl}/viewed", CreateInProductTrainingViewAsync)
                 .Description("Create a new InProductTraining resource")
                 .StatusCodes(HttpStatusCode.Created, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError)
-                .RequestFormat(InProductTraining.Example())
-                .ResponseFormat(InProductTraining.Example());
+                .RequestFormat(InProductTrainingViewRequest.Example())
+                .ResponseFormat(InProductTrainingViewResponse.Example());
 
-            CreateRoute("GetInProductTraining", HttpMethod.Get, "/v1/inProductTraining/{id:guid}", GetInProductTrainingAsync)
-                .Description("Get a InProductTraining resource by it's identifier.")
+            CreateRoute("GetViewedInProductTraining", HttpMethod.Get, $"{BaseInProductTrainingUrl}/viewed/{{clientApplicationId:int}}", GetViewedInProductTrainingAsync)
+                .Description("Get a InProductTrainingView resource by it's identifier.")
                 .StatusCodes(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)
-                .ResponseFormat(InProductTraining.Example());
-
-            CreateRoute("UpdateInProductTraining", HttpMethod.Put, "/v1/inProductTraining/{id:guid}", UpdateInProductTrainingAsync)
-                .Description("Update a InProductTraining resource.")
-                .StatusCodes(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)
-                .RequestFormat(InProductTraining.Example())
-                .ResponseFormat(InProductTraining.Example());
-
-            CreateRoute("DeleteInProductTraining", HttpMethod.Delete, "/v1/inProductTraining/{id:guid}", DeleteInProductTrainingAsync)
-                .Description("Delete a InProductTraining resource.")
-                .StatusCodes(HttpStatusCode.NoContent, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.InternalServerError);
+                .ResponseFormat(InProductTrainingViewResponse.Example());
         }
 
-        private async Task<object> CreateInProductTrainingAsync(dynamic input)
+        private async Task<object> CreateInProductTrainingViewAsync(dynamic input)
         {
-            InProductTraining newInProductTraining;
+            InProductTrainingViewRequest newInProductTrainingViewRequest;
+            string errorMessage;
+
             try
             {
-                newInProductTraining = this.Bind<InProductTraining>();
+                newInProductTrainingViewRequest = this.Bind<InProductTrainingViewRequest>();
             }
             catch (Exception ex)
             {
-                Logger.Error("Binding failed while attempting to create a InProductTraining resource", ex);
-                return Response.BadRequestBindingException();
+                errorMessage = "Binding failed while attempting to create a InProductTrainingView resource";
+                Logger.Error(errorMessage, ex);
+                return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            // Make sure this is called outside of our typical try/catch blocks because this will
-            // throw a special Nancy exception that will result in a 401 or 403 status code.
-            // If we were to put this in our try/catch below, it would come across as a 500
-            // instead, which is inaccurate.
-            await RequiresAccess()
-                .WithProjectIdExpansion(ctx => newInProductTraining.ProjectId)
-                .ExecuteAsync(CancellationToken.None);
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
 
             try
             {
-                var result = await _inProductTrainingController.CreateInProductTrainingAsync(newInProductTraining);
-                return Negotiate
-                    .WithModel(result)
-                    .WithStatusCode(HttpStatusCode.Created);
+                return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, PrincipalId);
+            }
+            catch (NotFoundException ex)
+            {
+                errorMessage = "Requested inProductTraining resource could not be found.";
+                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
             }
             catch (ValidationFailedException ex)
             {
-                Logger.Error("Validation failed while attempting to create a InProductTraining resource", ex);
-                return Response.BadRequestValidationFailed(ex.Errors);
+                errorMessage = "The InProductTraining payload is invalid.";
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
+            }
+            catch (RequestFailedException ex)
+            {
+                errorMessage = "InProductTraining resource could not be created.";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to create inProductTraining resource due to an error", ex);
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorCreateInProductTraining);
+                errorMessage = "Failed to create inProductTraining resource due to an error.";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
         }
 
-        private async Task<object> GetInProductTrainingAsync(dynamic input)
+        private async Task<object> GetViewedInProductTrainingAsync(dynamic input)
         {
-            Guid id = input.id;
-            InProductTraining result;
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+
+            string errorMessage;
 
             try
             {
-                result = await _inProductTrainingController.GetInProductTrainingAsync(id);
+                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, PrincipalId);
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
-                Logger.Error($"Could not find a '{id}'");
-                return Response.NotFound(ResponseReasons.NotFoundInProductTraining);
+                errorMessage = $"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
             }
             catch (ValidationFailedException ex)
             {
-                Logger.Error($"Validation failed while attempting to get '{id}'", ex);
-                return Response.BadRequestValidationFailed(ex.Errors);
+                errorMessage = $"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failed to get '{id}'", ex);
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining);
-            }
-
-            // As an optimization we're getting the resource from the database first so we can use
-            // the ProjectId from the resource in the expansion below (with out re-getting it).
-            await RequiresAccess()
-                .WithProjectIdExpansion(ctx => result.ProjectId)
-                .ExecuteAsync(CancellationToken.None);
-
-            return result;
-        }
-
-        private async Task<object> UpdateInProductTrainingAsync(dynamic input)
-        {
-            Guid id = input.id;
-            InProductTraining inProductTrainingModel;
-
-            try
-            {
-                inProductTrainingModel = this.Bind<InProductTraining>();
-            }
-            catch (Exception ex)
-            {
-                Logger.Warning("Binding failed while attempting to update a InProductTraining resource.", ex);
-                return Response.BadRequestBindingException();
-            }
-
-            await RequiresAccess()
-                .WithProjectIdExpansion(async (ctx, ct) =>
-                {
-                    var resource = await _inProductTrainingController.GetInProductTrainingAsync(id);
-                    return resource.ProjectId;
-                })
-                .ExecuteAsync(CancellationToken.None);
-
-            try
-            {
-                return await _inProductTrainingController.UpdateInProductTrainingAsync(id, inProductTrainingModel);
-            }
-            catch (ValidationFailedException ex)
-            {
-                Logger.Error($"Validation failed while attempting to update '{id}'", ex);
-                return Response.BadRequestValidationFailed(ex.Errors);
-            }
-            catch (NotFoundException)
-            {
-                Logger.Error($"Could not find '{id}'");
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorUpdateInProductTraining);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Unhandled exception encountered while attempting to update '{id}'", ex);
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorUpdateInProductTraining);
-            }
-        }
-
-        private async Task<object> DeleteInProductTrainingAsync(dynamic input)
-        {
-            Guid id = input.id;
-
-            await RequiresAccess()
-                .WithProjectIdExpansion(async (ctx, ct) =>
-                {
-                    var resource = await _inProductTrainingController.GetInProductTrainingAsync(id);
-                    return resource.ProjectId;
-                })
-                .ExecuteAsync(CancellationToken.None);
-
-            try
-            {
-                await _inProductTrainingController.DeleteInProductTrainingAsync(id);
-
-                return new Response
-                {
-                    StatusCode = HttpStatusCode.NoContent,
-                    ReasonPhrase = "Resource has been deleted"
-                };
-            }
-            catch (ValidationFailedException ex)
-            {
-                Logger.Error($"Validation failed while attempting to delete '{id}'", ex);
-                return Response.BadRequestValidationFailed(ex.Errors);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Unhandled exception encountered while attempting to delete '{id}'", ex);
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorDeleteInProductTraining);
+                errorMessage = $"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
         }
     }

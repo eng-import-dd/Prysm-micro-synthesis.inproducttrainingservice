@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\librdkafka.redist.0.11.3\build\librdkafka.redist.props" Condition="Exists('..\packages\librdkafka.redist.0.11.3\build\librdkafka.redist.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
@@ -56,6 +56,12 @@
     </Reference>
     <Reference Include="Confluent.SchemaRegistry, Version=0.11.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Confluent.SchemaRegistry.0.11.3-ci-255\lib\net452\Confluent.SchemaRegistry.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="FluentValidation, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentValidation.7.1.1\lib\net45\FluentValidation.dll</HintPath>
@@ -179,6 +185,9 @@
     <Reference Include="Synthesis.Cache.Redis, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.Cache.Redis.2.1.0-beta001\lib\net452\Synthesis.Cache.Redis.dll</HintPath>
     </Reference>
+    <Reference Include="Synthesis.Cloud.SqlData">
+      <HintPath>..\..\..\synthesis-cloud\Synthesis.Cloud.SqlData\bin\Debug\Synthesis.Cloud.SqlData.dll</HintPath>
+    </Reference>
     <Reference Include="Synthesis.Configuration, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.Configuration.1.0.0.1\lib\net452\Synthesis.Configuration.dll</HintPath>
     </Reference>
@@ -204,7 +213,10 @@
       <HintPath>..\packages\Synthesis.Http.1.1.0-beta002\lib\net452\Synthesis.Http.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.Http.Microservice, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Synthesis.Http.Microservice.1.0.0-beta014\lib\net452\Synthesis.Http.Microservice.dll</HintPath>
+      <HintPath>..\packages\Synthesis.Http.Microservice.1.0.0-beta015\lib\net452\Synthesis.Http.Microservice.dll</HintPath>
+    </Reference>
+    <Reference Include="Synthesis.InProductTrainingService.InternalApi, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Synthesis.InProductTrainingService.InternalApi.1.0.0-beta007\lib\net452\Synthesis.InProductTrainingService.InternalApi.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.KeyManager, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.KeyManager.2.1.0-beta005\lib\net452\Synthesis.KeyManager.dll</HintPath>
@@ -236,6 +248,9 @@
     <Reference Include="Synthesis.PolicyEvaluator.Autofac, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.PolicyEvaluator.Autofac.1.0.0-beta007\lib\net452\Synthesis.PolicyEvaluator.Autofac.dll</HintPath>
     </Reference>
+    <Reference Include="Synthesis.PrincipalService.InternalApi, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Synthesis.PrincipalService.InternalApi.1.0.0-beta013\lib\net452\Synthesis.PrincipalService.InternalApi.dll</HintPath>
+    </Reference>
     <Reference Include="Synthesis.Serialization, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.Serialization.1.0.5\lib\net452\Synthesis.Serialization.dll</HintPath>
     </Reference>
@@ -244,6 +259,9 @@
     </Reference>
     <Reference Include="Synthesis.Serialization.Json, Version=1.0.9.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.Serialization.Json.1.0.9\lib\net452\Synthesis.Serialization.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Synthesis.TenantService.InternalApi, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Synthesis.TenantService.InternalApi.1.0.1-beta004\lib\net452\Synthesis.TenantService.InternalApi.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.Threading, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.Threading.1.1.0\lib\net452\Synthesis.Threading.dll</HintPath>
@@ -262,6 +280,7 @@
       <HintPath>..\packages\Synthesis.Tracking.Web.1.0.0-beta1\lib\net452\Synthesis.Tracking.Web.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -312,20 +331,21 @@
     <Compile Include="Constants\ResponseReasons.cs" />
     <Compile Include="Controllers\InProductTrainingController.cs" />
     <Compile Include="Controllers\IInProductTrainingController.cs" />
-    <Compile Include="EventHandlers\EventHandlerExample.cs" />
-    <Compile Include="EventHandlers\EventHandlerExampleWithNoPayload.cs" />
-    <Compile Include="Events\EventSubscriber.cs" />
+    <Compile Include="Data\SynthesisDataContext.cs" />
+    <Compile Include="Enums\CacheConnection.cs" />
+    <Compile Include="Enums\ResultCode.cs" />
+    <Compile Include="Extensions\ResultCodeExtensions.cs" />
     <Compile Include="HttpClientConfiguration.cs" />
     <Compile Include="MicroserviceHttpClientResolver.cs" />
-    <Compile Include="Models\InProductTraining.cs" />
-    <Compile Include="Modules\InProductTrainingServiceHealthModule.cs" />
     <Compile Include="Modules\InProductTrainingModule.cs" />
+    <Compile Include="Modules\InProductTrainingServiceHealthModule.cs" />
     <Compile Include="Owin\GlobalExceptionHandlerMiddleware.cs" />
     <Compile Include="InProductTrainingServiceBootstrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Validators\InProductTrainingIdValidator.cs" />
-    <Compile Include="Validators\InProductTrainingValidator.cs" />
-    <Compile Include="Validators\GuidValidator.cs" />
+    <Compile Include="Resolvers\KeyResolver.cs" />
+    <Compile Include="Data\InProductTrainingSqlService.cs" />
+    <Compile Include="Validators\ClientApplicationIdValidator.cs" />
+    <Compile Include="Validators\InProductTrainingViewRequestValidator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -343,6 +363,7 @@
     <Content Include="librdkafka\x86\msvcr120.dll" />
     <Content Include="librdkafka\x86\zlib.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

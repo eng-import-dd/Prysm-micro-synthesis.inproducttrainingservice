@@ -1,17 +1,14 @@
-using Synthesis.InProductTrainingService.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Synthesis.InProductTrainingService.InternalApi.Requests;
+using Synthesis.InProductTrainingService.InternalApi.Responses;
 
 namespace Synthesis.InProductTrainingService.Controllers
 {
     public interface IInProductTrainingController
     {
-        Task<InProductTraining> CreateInProductTrainingAsync(InProductTraining model);
-
-        Task<InProductTraining> GetInProductTrainingAsync(Guid inProductTrainingId);
-
-        Task<InProductTraining> UpdateInProductTrainingAsync(Guid inProductTrainingId, InProductTraining model);
-
-        Task DeleteInProductTrainingAsync(Guid inProductTrainingId);
+        Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest model, Guid userId);
+        Task<IEnumerable<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId);
     }
 }

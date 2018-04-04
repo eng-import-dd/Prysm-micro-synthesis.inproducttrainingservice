@@ -11,5 +11,6 @@ namespace Synthesis.InProductTrainingService.Constants
 
         // Not found
         public const string NotFoundInProductTraining = "InProductTraining Not Found";
+        public const string NotFoundUserIdForInProductTraining = "UserId Not Found";
     }
 }

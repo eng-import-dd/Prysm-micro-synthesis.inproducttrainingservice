@@ -1,4 +1,4 @@
-using Nancy;
+﻿using Nancy;
 using Synthesis.Nancy.MicroService.Metadata;
 using Synthesis.Nancy.MicroService.Security;
 using System.Threading.Tasks;
