@@ -24,7 +24,6 @@ namespace Synthesis.InProductTrainingService.Controllers
     /// <seealso cref="IInProductTrainingController" />
     public class InProductTrainingController : IInProductTrainingController
     {
-        //private readonly IEventService _eventService;
         // ReSharper disable once NotAccessedField.Local
         private readonly ILogger _logger;
         private readonly IValidatorLocator _validatorLocator;
