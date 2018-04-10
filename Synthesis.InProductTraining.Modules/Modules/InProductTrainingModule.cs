@@ -24,6 +24,7 @@ namespace Synthesis.InProductTrainingService.Modules
     {
         private readonly IInProductTrainingController _inProductTrainingController;
         private const string BaseInProductTrainingUrl = "/v1/inproducttraining";
+        private const string BaseWizardsUrl = "/v1/wizards";
 
         public InProductTrainingModule(
             IInProductTrainingController inProductTrainingController,
@@ -44,6 +45,17 @@ namespace Synthesis.InProductTrainingService.Modules
 
             CreateRoute("GetViewedInProductTraining", HttpMethod.Get, $"{BaseInProductTrainingUrl}/viewed/{{clientApplicationId:int}}", GetViewedInProductTrainingAsync)
                 .Description("Get a InProductTrainingView resource by it's identifier.")
+                .StatusCodes(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)
+                .ResponseFormat(InProductTrainingViewResponse.Example());
+
+            CreateRoute("CreateInProductTrainingWizardView", HttpMethod.Post, $"{BaseWizardsUrl}/viewed", CreateInProductTrainingWizardViewAsync)
+                .Description("Create a new wizard view resource")
+                .StatusCodes(HttpStatusCode.Created, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError)
+                .RequestFormat(InProductTrainingViewRequest.Example())
+                .ResponseFormat(InProductTrainingViewResponse.Example());
+
+            CreateRoute("GetWizardViewsInProductTraining", HttpMethod.Get, $"{BaseWizardsUrl}/viewed/{{userId:guid}}", GetWizardViewsInProductTrainingAsync)
+                .Description("Get a wizard view resource by it's identifier.")
                 .StatusCodes(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound)
                 .ResponseFormat(InProductTrainingViewResponse.Example());
         }
@@ -93,6 +105,77 @@ namespace Synthesis.InProductTrainingService.Modules
         }
 
         private async Task<object> GetViewedInProductTrainingAsync(dynamic input)
+        {
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+
+            string errorMessage;
+
+            try
+            {
+                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, PrincipalId);
+            }
+            catch (NotFoundException ex)
+            {
+                errorMessage = $"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
+            }
+            catch (ValidationFailedException ex)
+            {
+                errorMessage = $"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
+            }
+        }
+
+        private async Task<object> CreateInProductTrainingWizardViewAsync(dynamic input)
+        {
+            WizardView newWizardView;
+            string errorMessage;
+
+            try
+            {
+                newWizardView = this.Bind<WizardView>();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Binding failed while attempting to create a InProductTrainingWizardView resource";
+                Logger.Error(errorMessage, ex);
+                return Response.BadRequestBindingException(errorMessage, ex.Message);
+            }
+
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+
+            try
+            {
+                return await _inProductTrainingController.CreateInProductTrainingViewAsync(newWizardView, PrincipalId);
+            }
+            catch (NotFoundException ex)
+            {
+                errorMessage = "Requested inProductTrainingWizardView resource could not be found.";
+                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
+            }
+            catch (ValidationFailedException ex)
+            {
+                errorMessage = "The InProductTraining payload is invalid.";
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
+            }
+            catch (RequestFailedException ex)
+            {
+                errorMessage = "InProductTrainingWizardView resource could not be created.";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Failed to create inProductTrainingWizardView resource due to an error.";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
+            }
+        }
+
+        private async Task<object> GetWizardViewsInProductTrainingAsync(dynamic input)
         {
             await RequiresAccess().ExecuteAsync(CancellationToken.None);
 
