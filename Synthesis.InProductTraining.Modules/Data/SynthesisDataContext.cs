@@ -7,7 +7,7 @@ using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Validation;
 using System.Data.SqlClient;
-using Synthesis.InProductTrainingService.InternalApi.Models;
+using Synthesis.InProductTrainingService.Models;
 
 namespace Synthesis.InProductTrainingService.Data
 {
