@@ -9,6 +9,7 @@ using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.InProductTrainingService.Data;
 using Synthesis.InProductTrainingService.InternalApi.Enums;
+using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.InProductTrainingService.Resolvers;
@@ -265,90 +266,78 @@ namespace Synthesis.InProductTrainingService.Controllers
 
 
 
+        public async Task<WizardViewResponse> CreateWizardViewAsync(WizardView model)
+        {
+            try
+            {
+                var existingWizards = await RetrieveViewedWizardsAsync(model.UserId);
+                var wizardsOfType = existingWizards.Where(w => w.WizardType == model.WizardType).ToList();
 
+                if (wizardsOfType.Count > 0)
+                {
+                    return new WizardViewResponse
+                    {
+                        WizardViews = wizardsOfType,
+                        ResultMessage = $"Wizard(s) already viewed by user '{model.UserId}'.",
+                        ResultCode = ResultCode.RecordAlreadyExists
+                    };
+                }
 
+                var viewedWizard = await _dbService.CreateViewedWizardAsync(model);
+                var key = KeyResolver.WizardViews(model.UserId);
+                await _cache.KeyDeleteAsync(key, CacheCommandOptions.FireAndForget);
 
+                return new WizardViewResponse
+                {
+                    WizardViews = new List<WizardView> { viewedWizard },
+                    ResultCode = ResultCode.Success
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("A WizardView resource has not been created due to an unknown error.", ex);
+                return new WizardViewResponse()
+                {
+                    ResultMessage = ex.ToString(),
+                    ResultCode = ResultCode.Failed
+                };
+            }
+        }
 
-        //#region ViewedWizards
+        public async Task<WizardViewResponse> GetWizardViewsByUserIdAsync(Guid userId)
+        {
+            try
+            {
+                return new WizardViewResponse
+                {
+                    WizardViews = await RetrieveViewedWizardsAsync(userId),
+                    ResultCode = ResultCode.Success
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("A WizardView resource could not be retrieved due to an unknown error.", ex);
+                return new WizardViewResponse()
+                {
+                    ResultMessage = ex.ToString(),
+                    ResultCode = ResultCode.Failed
+                };
+            }
+        }
 
-        //public async Task<ServiceResult<List<ViewedWizardDto>>> CreateViewedWizardAsync(ViewedWizardDto viewedWizardDto)
-        //{
-        //    try
-        //    {
-        //        var existingWizards = await RetrieveViewedWizardsAsync(viewedWizardDto.UserId);
-        //        var wizardsOfType = existingWizards.Where(w => w.WizardType == viewedWizardDto.WizardType).ToList();
+        private async Task<List<WizardView>> RetrieveViewedWizardsAsync(Guid userId)
+        {
+            var key = KeyResolver.WizardViews(userId);
 
-        //        if (wizardsOfType.Count > 0)
-        //        {
-        //            return new ServiceResult<List<ViewedWizardDto>>
-        //            {
-        //                Payload = wizardsOfType,
-        //                Message = $"Wizard(s) already viewed by '{viewedWizardDto.UserId}' user.",
-        //                ResultCode = ResultCode.RecordAlreadyExists
-        //            };
-        //        }
+            if (_cache.KeyExists(key))
+            {
+                return await _cache.ItemGetAsync<List<WizardView>>(key);
+            }
 
-        //        var viewedWizard = await _databaseService.CreateViewedWizardAsync(viewedWizardDto);
-        //        wizardsOfType = new List<ViewedWizardDto> { Mapper.Map<ViewedWizard, ViewedWizardDto>(viewedWizard) };
+            var wizardViews = await _dbService.GetViewedWizardsAsync(userId);
+            await _cache.ItemSetAsync(key, wizardViews, _expirationTime);
 
-        //        var key = KeyResolver.ViewedWizards(viewedWizardDto.UserId);
-        //        var cache = _cacheSelector[CacheConnection.General];
-        //        await cache.KeyDeleteAsync(key, CacheCommandOptions.FireAndForget);
-
-        //        return new ServiceResult<List<ViewedWizardDto>>
-        //        {
-        //            Payload = wizardsOfType,
-        //            ResultCode = ResultCode.Success
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        LogError(ex, nameof(CreateViewedWizardAsync));
-        //        return new ServiceResult<List<ViewedWizardDto>>
-        //        {
-        //            Message = ex.ToString(),
-        //            ResultCode = ResultCode.Failed
-        //        };
-        //    }
-        //}
-
-        //public async Task<ServiceResult<List<ViewedWizardDto>>> GetViewedWizardsAsync(Guid userId)
-        //{
-        //    try
-        //    {
-        //        return new ServiceResult<List<ViewedWizardDto>>
-        //        {
-        //            Payload = await RetrieveViewedWizardsAsync(userId),
-        //            ResultCode = ResultCode.Success
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        LogError(ex, nameof(GetViewedWizardsAsync));
-        //        return new ServiceResult<List<ViewedWizardDto>>
-        //        {
-        //            Message = ex.ToString(),
-        //            ResultCode = ResultCode.Failed
-        //        };
-        //    }
-        //}
-
-        //private async Task<List<ViewedWizardDto>> RetrieveViewedWizardsAsync(Guid userId)
-        //{
-        //    string key = KeyResolver.ViewedWizards(userId);
-        //    var cache = _cacheSelector[CacheConnection.General];
-
-        //    if (cache.KeyExists(key))
-        //    {
-        //        return await cache.ItemGetAsync<List<ViewedWizardDto>>(key);
-        //    }
-
-        //    var viewedWizards = await _databaseService.GetViewedWizardsAsync(userId);
-        //    var viewedWizardsDto = Mapper.Map<List<ViewedWizard>, List<ViewedWizardDto>>(viewedWizards);
-        //    await cache.ItemSetAsync(key, viewedWizardsDto, _expirationTime);
-
-        //    return viewedWizardsDto;
-        //}
-        //#endregion
+            return wizardViews;
+        }
     }
 }

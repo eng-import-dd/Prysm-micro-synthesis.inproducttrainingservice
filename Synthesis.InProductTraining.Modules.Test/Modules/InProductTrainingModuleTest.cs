@@ -87,7 +87,7 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         [Fact]
         public async void RespondWithUnauthorizedNoBearer()
         {
-            var actual = await UnauthenticatedBrowser.Get($"/v1/inProductTraining/viewed/{_defaultClientApplicationId}", BuildRequest);
+            var actual = await UnauthenticatedBrowser.Get($"/v1/inproducttTraining/viewed/{_defaultClientApplicationId}", BuildRequest);
 
             Assert.Equal(HttpStatusCode.Unauthorized, actual.StatusCode);
         }
@@ -158,7 +158,7 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         [Fact]
         public async void CreateRespondWithUnauthorizedNoBearer()
         {
-            var actual = await UnauthenticatedBrowser.Post("/v1/inProductTraining/viewed", BuildRequest);
+            var actual = await UnauthenticatedBrowser.Post("/v1/inproducttraining/viewed", BuildRequest);
 
             Assert.Equal(HttpStatusCode.Unauthorized, actual.StatusCode);
         }

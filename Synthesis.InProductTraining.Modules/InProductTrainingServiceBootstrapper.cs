@@ -50,7 +50,7 @@ namespace Synthesis.InProductTrainingService
     public class InProductTrainingServiceBootstrapper : AutofacNancyBootstrapper
     {
         public const string ServiceName = "Synthesis.InProductTrainingService";
-        public const string ServiceNameShort = "inProductTraining";
+        public const string ServiceNameShort = "inproducttraining";
         private const int RedisConnectRetryTimes = 30;
         private const int RedisConnectTimeoutInMilliseconds = 10 * 1000;
         private const int RedisSyncTimeoutInMilliseconds = 15 * 1000;
