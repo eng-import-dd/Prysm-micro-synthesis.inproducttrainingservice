@@ -67,85 +67,97 @@ namespace Synthesis.InProductTrainingService.Controllers
                 throw new ValidationFailedException(validationResult.Errors);
             }
 
-            var createdByUserName = _userApi.GetUserAsync(userId).Result.Payload.Username;
-            var key = KeyResolver.InProductTrainingViews(userId, inProductTrainingViewRequest.ClientApplicationId);
-            var dtoForTrace = _serializer.SerializeToString(inProductTrainingViewRequest);
-            string returnMessage;
+            var returnPayload = new InProductTrainingViewResponse();
+            var returnMessage = "";
+            var returnResultCode = ResultCode.Failed;
 
-            var cachedData = await _cache.SetMembersAsync<InProductTrainingViewResponse>(key);
-            var trainingOfType = cachedData?.Where(t =>
-                    t.InProductTrainingSubjectId == inProductTrainingViewRequest.InProductTrainingSubjectId &&
-                    t.Title == inProductTrainingViewRequest.Title &&
-                    t.UserId == userId)
-                .FirstOrDefault();
+            const string createdByUserName = "Api";
 
-            if (trainingOfType != null)
+            try
             {
-                PopulateCache(trainingOfType, key, dtoForTrace);
-                returnMessage = $"{nameof(CreateInProductTrainingViewAsync)} -  Record not created because it already exists in cache. {dtoForTrace}";
+                var key = KeyResolver.InProductTrainingViews(userId, inProductTrainingViewRequest.ClientApplicationId);
+                var dtoForTrace = _serializer.SerializeToString(inProductTrainingViewRequest);
 
-                throw new Exception(returnMessage);
+                var cachedData = await _cache.SetMembersAsync<InProductTrainingViewResponse>(key);
+                var trainingOfType = cachedData?.Where(t =>
+                        t.InProductTrainingSubjectId == inProductTrainingViewRequest.InProductTrainingSubjectId &&
+                        t.Title == inProductTrainingViewRequest.Title &&
+                        t.UserId == userId)
+                    .FirstOrDefault();
+
+                if (trainingOfType != null)
+                {
+                    returnPayload = trainingOfType;
+                    returnMessage = CreateInProductTrainingViewReturnCode.RecordAlreadyExists.BuildResponseMessage(inProductTrainingViewRequest, userId);
+                    returnResultCode = ResultCode.RecordAlreadyExists;
+
+                    _logger.Info($"Record not created because it already exists in cache. {dtoForTrace}");
+                }
+
+                var populateCache = false;
+                InProductTrainingViewResponse queryResult = null;
+                if (returnResultCode != ResultCode.RecordAlreadyExists)
+                {
+                    var returnCode = CreateInProductTrainingViewReturnCode.CreateFailed;
+                    queryResult = _dbService.CreateInProductTrainingView(
+                        inProductTrainingViewRequest.InProductTrainingSubjectId, userId,
+                        inProductTrainingViewRequest.Title, inProductTrainingViewRequest.UserTypeId, createdByUserName, ref returnCode);
+
+                    returnPayload = queryResult;
+                    returnMessage = returnCode.BuildResponseMessage(inProductTrainingViewRequest, userId);
+                    returnResultCode = returnCode.ToResultCode();
+
+                    if (returnCode == CreateInProductTrainingViewReturnCode.CreateSucceeded)
+                    {
+                        populateCache = true;
+                        _logger.Info($"Created InProductTrainingView record. {dtoForTrace}");
+                    }
+                    else
+                    {
+                        if (returnCode == CreateInProductTrainingViewReturnCode.RecordAlreadyExists)
+                        {
+                            populateCache = true;
+                            _logger.Info($"Record not created because it already exists in dB. {dtoForTrace}");
+                        }
+                        else if (returnCode == CreateInProductTrainingViewReturnCode.CreateFailed)
+                        {
+                            _logger.Error($"{returnMessage} {dtoForTrace}");
+                        }
+                        else
+                        {
+                            _logger.Warning($"{returnMessage} {dtoForTrace}");
+                        }
+                    }
+                }
+
+                if (populateCache && queryResult != null)
+                {
+                    var queryResultAsList = new List<InProductTrainingViewResponse> { queryResult };
+                    if (await _cache.SetAddAsync(key, queryResultAsList) > 0 || await _cache.KeyExistsAsync(key))
+                    {
+                        _logger.Info($"Succesfully cached an item in the set for key '{key}' {dtoForTrace}");
+                        if (!await _cache.KeyExpireAsync(key, _expirationTime, CacheCommandOptions.None))
+                        {
+                            _logger.Error($"Could not set cache expiration for the key '{key}' or the key does not exist. {dtoForTrace}");
+                        }
+                    }
+                    else
+                    {
+                        _logger.Error($"Could not cache an item in the set for '{key}'. {dtoForTrace}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                returnPayload.ResultCode = ResultCode.Failed;
+                returnPayload.ReturnMessage = ex.ToString();
+
+                _logger.Error("Create InProductTrainingView failed due to an unknown exception", ex);
             }
 
-            // Database
-            var returnCode = CreateInProductTrainingViewReturnCode.CreateFailed;
-            var queryResult = _dbService.CreateInProductTrainingView(
-                inProductTrainingViewRequest.InProductTrainingSubjectId, userId,
-                inProductTrainingViewRequest.Title, inProductTrainingViewRequest.UserTypeId, createdByUserName, ref returnCode);
-
-            switch (returnCode)
-            {
-                case CreateInProductTrainingViewReturnCode.CreateSucceeded:
-
-                    if (queryResult != null)
-                    {
-                        PopulateCache(queryResult, key, dtoForTrace);
-                    }
-
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Info(returnMessage);
-
-                    return queryResult;
-
-                case CreateInProductTrainingViewReturnCode.RecordAlreadyExists:
-
-                    if (queryResult != null)
-                    {
-                        PopulateCache(queryResult, key, dtoForTrace);
-                    }
-
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Info(returnMessage);
-
-                    throw new Exception(returnMessage);
-
-                case CreateInProductTrainingViewReturnCode.CreateFailed:
-
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Error(returnMessage);
-
-                    throw new RequestFailedException(returnMessage);
-
-                case CreateInProductTrainingViewReturnCode.InProductTrainingSubjectNotFound:
-
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Error(returnMessage);
-
-                    throw new NotFoundException(returnMessage);
-
-                case CreateInProductTrainingViewReturnCode.UserNotFound:
-
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-                    _logger.Error(returnMessage);
-
-                    throw new NotFoundException(returnMessage);
-
-                default:
-
-                    returnMessage = BuildCreateInProductTrainingViewResponseMessage(returnCode, inProductTrainingViewRequest, userId);
-
-                    throw new Exception(returnMessage);
-            }
+            returnPayload.ReturnMessage = returnMessage;
+            returnPayload.ResultCode = returnResultCode;
+            return returnPayload;
         }
 
         public async Task<IEnumerable<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId)
@@ -215,52 +227,6 @@ namespace Synthesis.InProductTrainingService.Controllers
 
                 throw new Exception(errorMessage, ex);
             }
-        }
-
-        private async void PopulateCache(InProductTrainingViewResponse queryResult, string key, string dtoForTrace)
-        {
-            var queryResultAsList = new List<InProductTrainingViewResponse> { queryResult };
-            if (await _cache.SetAddAsync(key, queryResultAsList) > 0 || await _cache.KeyExistsAsync(key))
-            {
-                _logger.Info($"{nameof(CreateInProductTrainingViewAsync)} - Succesfully cached an item in the set for key '{key}' {dtoForTrace}");
-                if (!await _cache.KeyExpireAsync(key, _expirationTime, CacheCommandOptions.None))
-                {
-                    _logger.Error($"{nameof(CreateInProductTrainingViewAsync)} - Could not set cache expiration for the key '{key}' or the key does not exist. {dtoForTrace}");
-                }
-            }
-            else
-            {
-                _logger.Error($"{nameof(CreateInProductTrainingViewAsync)} - Could not cache an item in the set for '{key}'. {dtoForTrace}");
-            }
-        }
-
-        private string BuildCreateInProductTrainingViewResponseMessage(CreateInProductTrainingViewReturnCode returnCode, InProductTrainingViewRequest inProductTrainingViewRequest, Guid userId)
-        {
-            string responseMessage;
-            const string baseError = "In-product training view record could not be created.";
-            switch (returnCode)
-            {
-                case CreateInProductTrainingViewReturnCode.CreateSucceeded:
-                    responseMessage = "Success";
-                    break;
-                case CreateInProductTrainingViewReturnCode.UserNotFound:
-                    responseMessage = $"Validation failed. {baseError} {nameof(userId)} '{userId}' could not be found.";
-                    break;
-                case CreateInProductTrainingViewReturnCode.InProductTrainingSubjectNotFound:
-                    responseMessage = $"Validation failed. {baseError} {nameof(InProductTrainingViewRequest.InProductTrainingSubjectId)} {inProductTrainingViewRequest.InProductTrainingSubjectId} could not be found.";
-                    break;
-                case CreateInProductTrainingViewReturnCode.CreateFailed:
-                    responseMessage = $"An error occurred. {baseError}";
-                    break;
-                case CreateInProductTrainingViewReturnCode.RecordAlreadyExists:
-                    responseMessage = $"Record already exists. {baseError}";
-                    break;
-                default:
-                    responseMessage = $"An error occurred. {baseError}";
-                    break;
-            }
-
-            return responseMessage;
         }
     }
 }

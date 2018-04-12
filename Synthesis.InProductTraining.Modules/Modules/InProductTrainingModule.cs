@@ -70,20 +70,10 @@ namespace Synthesis.InProductTrainingService.Modules
             {
                 return await _inProductTrainingController.CreateInProductTrainingViewAsync(newInProductTrainingViewRequest, PrincipalId);
             }
-            catch (NotFoundException ex)
-            {
-                errorMessage = "Requested inProductTraining resource could not be found.";
-                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
-            }
             catch (ValidationFailedException ex)
             {
                 errorMessage = "The InProductTraining payload is invalid.";
                 return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
-            }
-            catch (RequestFailedException ex)
-            {
-                errorMessage = "InProductTraining resource could not be created.";
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTraining, errorMessage, ex.Message);
             }
             catch (Exception ex)
             {
@@ -101,11 +91,6 @@ namespace Synthesis.InProductTrainingService.Modules
             try
             {
                 return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, PrincipalId);
-            }
-            catch (NotFoundException ex)
-            {
-                errorMessage = $"Could not find an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
-                return Response.NotFound(ResponseReasons.NotFoundInProductTraining, errorMessage, ex.Message);
             }
             catch (ValidationFailedException ex)
             {
