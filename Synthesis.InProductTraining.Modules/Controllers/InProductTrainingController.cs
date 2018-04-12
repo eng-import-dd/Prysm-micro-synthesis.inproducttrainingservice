@@ -71,6 +71,7 @@ namespace Synthesis.InProductTrainingService.Controllers
             var returnMessage = "";
             var returnResultCode = ResultCode.Failed;
 
+            // TODO: Replace this with the username returned from the PrincipalService
             const string createdByUserName = "Api";
 
             try
