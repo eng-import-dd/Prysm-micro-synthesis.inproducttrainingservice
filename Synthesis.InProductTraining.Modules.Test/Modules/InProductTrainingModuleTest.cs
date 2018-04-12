@@ -4,7 +4,6 @@ using System.Threading;
 using FluentValidation.Results;
 using Moq;
 using Nancy;
-using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Constants;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.Policy.Models;
@@ -78,10 +77,6 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
 
             Assert.Equal(HttpStatusCode.Unauthorized, actual.StatusCode);
         }
-
-
-
-
 
         [Fact]
         public async void CreateReturnsBadRequestWhenControllerThrowsValidationException()
