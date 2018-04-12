@@ -4,7 +4,6 @@ using System.Threading;
 using FluentValidation.Results;
 using Moq;
 using Nancy;
-using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Constants;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.Policy.Models;
@@ -64,19 +63,6 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
         }
 
         [Fact]
-        public async void GetReturnsNotFoundWhenControllerThrowsNotFound()
-        {
-            _inProductTrainingControllerMock
-                .Setup(x => x.GetViewedInProductTrainingAsync(It.IsAny<int>(), It.IsAny<Guid>()))
-                .ThrowsAsync(new NotFoundException(""));
-
-            var actual = await UserTokenBrowser.Get($"/v1/inproducttraining/viewed/{_defaultClientApplicationId}", BuildRequest);
-
-            Assert.Equal(HttpStatusCode.NotFound, actual.StatusCode);
-            Assert.Equal(ResponseReasons.NotFoundInProductTraining, actual.ReasonPhrase);
-        }
-
-        [Fact]
         public async void GetReturnsOk()
         {
             var actual = await UserTokenBrowser.Get($"/v1/inproducttraining/viewed/{_defaultClientApplicationId}", BuildRequest);
@@ -91,10 +77,6 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
 
             Assert.Equal(HttpStatusCode.Unauthorized, actual.StatusCode);
         }
-
-
-
-
 
         [Fact]
         public async void CreateReturnsBadRequestWhenControllerThrowsValidationException()
@@ -132,19 +114,6 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
 
             Assert.Equal(HttpStatusCode.InternalServerError, actual.StatusCode);
             Assert.Equal(ResponseReasons.InternalServerErrorGetInProductTraining, actual.ReasonPhrase);
-        }
-
-        [Fact]
-        public async void CreateGetReturnsNotFoundWhenControllerThrowsNotFound()
-        {
-            _inProductTrainingControllerMock
-                .Setup(x => x.CreateInProductTrainingViewAsync(It.IsAny<InProductTrainingViewRequest>(), It.IsAny<Guid>()))
-                .ThrowsAsync(new NotFoundException(""));
-
-            var actual = await UserTokenBrowser.Post("/v1/inproducttraining/viewed", BuildRequest);
-
-            Assert.Equal(HttpStatusCode.NotFound, actual.StatusCode);
-            Assert.Equal(ResponseReasons.NotFoundInProductTraining, actual.ReasonPhrase);
         }
 
         [Fact]
