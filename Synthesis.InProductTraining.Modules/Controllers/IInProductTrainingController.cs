@@ -11,7 +11,7 @@ namespace Synthesis.InProductTrainingService.Controllers
     {
         Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest model, Guid userId);
         Task<IEnumerable<InProductTrainingViewResponse>> GetViewedInProductTrainingAsync(int clientApplicationId, Guid userId);
-        Task<WizardViewResponse> CreateWizardViewAsync(WizardView model);
+        Task<WizardViewResponse> CreateWizardViewAsync(ViewedWizard model);
         Task<WizardViewResponse> GetWizardViewsByUserIdAsync(Guid userId);
     }
 }

@@ -70,7 +70,7 @@ namespace Synthesis.InProductTrainingService.Data
             return trainingViews;
         }
 
-        public async Task<List<WizardView>> GetViewedWizardsAsync(Guid userId)
+        public async Task<List<ViewedWizard>> GetViewedWizardsAsync(Guid userId)
         {
             using (var sdc = new SynthesisDataContext())
             {
@@ -78,11 +78,10 @@ namespace Synthesis.InProductTrainingService.Data
             }
         }
 
-        public async Task<WizardView> CreateViewedWizardAsync(WizardView wizardView)
+        public async Task<ViewedWizard> CreateViewedWizardAsync(ViewedWizard wizardView)
         {
             using (var dc = new SynthesisDataContext())
             {
-                //var viewedWizard = Mapper.Map<ViewedWizardDto, ViewedWizard>(viewedWizardDto);
                 dc.ViewedWizards.Add(wizardView);
                 await dc.SaveChangesAsync();
 
