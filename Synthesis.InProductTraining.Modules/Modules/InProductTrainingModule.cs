@@ -95,6 +95,27 @@ namespace Synthesis.InProductTrainingService.Modules
             }
         }
 
+        private async Task<object> GetViewedInProductTrainingAsync(dynamic input)
+        {
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+
+            string errorMessage;
+
+            try
+            {
+                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, PrincipalId);
+            }
+            catch (ValidationFailedException ex)
+            {
+                errorMessage = $"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
+                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTrainingViews, errorMessage, ex.Message);
+            }
+        }
         private async Task<object> CreateWizardViewAsync(dynamic input)
         {
             ViewedWizard newWizardView;
