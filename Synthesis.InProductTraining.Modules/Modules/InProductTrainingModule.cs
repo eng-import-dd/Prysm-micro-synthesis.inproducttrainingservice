@@ -85,28 +85,6 @@ namespace Synthesis.InProductTrainingService.Modules
             }
             catch (ValidationFailedException ex)
             {
-                errorMessage = "The InProductTraining payload is invalid.";
-                return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                errorMessage = "Failed to create InProductTraining resource due to an error.";
-                return Response.InternalServerError(ResponseReasons.InternalServerErrorGetInProductTrainingViews, errorMessage, ex.Message);
-            }
-        }
-
-        private async Task<object> GetViewedInProductTrainingAsync(dynamic input)
-        {
-            await RequiresAccess().ExecuteAsync(CancellationToken.None);
-
-            string errorMessage;
-
-            try
-            {
-                return await _inProductTrainingController.GetViewedInProductTrainingAsync(input.clientApplicationId, PrincipalId);
-            }
-            catch (ValidationFailedException ex)
-            {
                 errorMessage = $"Validation failed while attempting to get an InProductTrainingView for clientApplicationId '{input.clientApplicationId}'";
                 return Response.BadRequestValidationException(ResponseText.BadRequestValidationFailed, errorMessage, ex.Message);
             }
@@ -162,11 +140,6 @@ namespace Synthesis.InProductTrainingService.Modules
             try
             {
                 return await _inProductTrainingController.GetWizardViewsByUserIdAsync(input.userId);
-            }
-            catch (NotFoundException ex)
-            {
-                errorMessage = $"Could not find a ViewedWizard for userId '{input.userId}'";
-                return Response.NotFound(ResponseReasons.NotFoundWizardViews, errorMessage, ex.Message);
             }
             catch (ValidationFailedException ex)
             {
