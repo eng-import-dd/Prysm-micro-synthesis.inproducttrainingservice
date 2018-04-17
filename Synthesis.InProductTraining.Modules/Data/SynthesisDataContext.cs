@@ -7,6 +7,7 @@ using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Validation;
 using System.Data.SqlClient;
+using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.Models;
 
 namespace Synthesis.InProductTrainingService.Data
@@ -24,6 +25,7 @@ namespace Synthesis.InProductTrainingService.Data
         public virtual DbSet<ClientApplication> ClientApplications { get; set; }
         public virtual DbSet<InProductTrainingSubject> InProductTrainingSubjects { get; set; }
         public virtual DbSet<InProductTrainingView> InProductTrainingViews { get; set; }
+        public virtual DbSet<ViewedWizard> ViewedWizards { get; set; }
 
         public override int SaveChanges()
         {
@@ -139,8 +141,8 @@ namespace Synthesis.InProductTrainingService.Data
                     foreach (SqlError sqlError in sqlEx.Errors)
                     {
                         sqlExceptionMessage.AppendLine($"A DbUpdateException has occurred. The inner SqlException details include=>\n[Message: {sqlError.Message}" +
-                            $"\nNumber: {sqlError.Number.ToString()}\nState: {sqlError.State.ToString()}\nSource: {sqlError.Source}\nSeverity: {sqlError.Class.ToString()}" +
-                            $"\nServer: {sqlError.Server}\nLineNumber: {sqlError.LineNumber.ToString()}\nProcedure: {sqlError.Procedure}]");
+                            $"\nNumber: {sqlError.Number}\nState: {sqlError.State}\nSource: {sqlError.Source}\nSeverity: {sqlError.Class}" +
+                            $"\nServer: {sqlError.Server}\nLineNumber: {sqlError.LineNumber}\nProcedure: {sqlError.Procedure}]");
                     }
                 }
 
@@ -166,6 +168,8 @@ namespace Synthesis.InProductTrainingService.Data
                 .HasMany(e => e.InProductTrainingViews)
                 .WithRequired(e => e.InProductTrainingSubject)
                 .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<ViewedWizard>();
         }
     }
 }

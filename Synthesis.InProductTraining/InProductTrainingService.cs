@@ -20,7 +20,7 @@ namespace Synthesis.InProductTrainingService
     /// </summary>
     internal sealed class InProductTrainingService : StatelessService
     {
-        public const string AppRoot = "inProductTraining";
+        public const string AppRoot = "inproducttraining";
 
         public InProductTrainingService(StatelessServiceContext context)
             : base(context)

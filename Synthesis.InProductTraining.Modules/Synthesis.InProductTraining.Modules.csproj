@@ -216,7 +216,7 @@
       <HintPath>..\packages\Synthesis.Http.Microservice.1.0.0-beta015\lib\net452\Synthesis.Http.Microservice.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.InProductTrainingService.InternalApi, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Synthesis.InProductTrainingService.InternalApi.1.0.0-beta013\lib\net452\Synthesis.InProductTrainingService.InternalApi.dll</HintPath>
+      <HintPath>..\packages\Synthesis.InProductTrainingService.InternalApi.1.0.0-beta015\lib\net452\Synthesis.InProductTrainingService.InternalApi.dll</HintPath>
     </Reference>
     <Reference Include="Synthesis.KeyManager, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Synthesis.KeyManager.2.1.0-beta005\lib\net452\Synthesis.KeyManager.dll</HintPath>
@@ -348,7 +348,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resolvers\KeyResolver.cs" />
     <Compile Include="Data\InProductTrainingSqlService.cs" />
+    <Compile Include="Validators\UserIdValidator.cs" />
     <Compile Include="Validators\ClientApplicationIdValidator.cs" />
+    <Compile Include="Validators\ViewedWizardValidator.cs" />
     <Compile Include="Validators\InProductTrainingViewRequestValidator.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -367,7 +369,6 @@
     <Content Include="librdkafka\x86\msvcr120.dll" />
     <Content Include="librdkafka\x86\zlib.dll" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

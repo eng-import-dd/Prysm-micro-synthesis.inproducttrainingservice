@@ -5,15 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Synthesis.Cache;
 using Synthesis.Logging;
-using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.InProductTrainingService.Data;
 using Synthesis.InProductTrainingService.InternalApi.Enums;
+using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.InProductTrainingService.Resolvers;
 using Synthesis.InProductTrainingService.Validators;
-using Synthesis.PrincipalService.InternalApi.Api;
 using Synthesis.Serialization;
 
 namespace Synthesis.InProductTrainingService.Controllers
@@ -30,7 +29,6 @@ namespace Synthesis.InProductTrainingService.Controllers
         private readonly IObjectSerializer _serializer;
         private readonly ICache _cache;
         private readonly InProductTrainingSqlService _dbService;
-        private readonly IUserApi _userApi;
         private readonly TimeSpan _expirationTime = TimeSpan.FromHours(8);
 
         /// <summary>
@@ -40,13 +38,11 @@ namespace Synthesis.InProductTrainingService.Controllers
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="serializer"></param>
         /// <param name="cache"></param>
-        /// <param name="userApi"></param>
         public InProductTrainingController(
             IValidatorLocator validatorLocator,
             ILoggerFactory loggerFactory,
             IObjectSerializer serializer,
-            ICache cache,
-            IUserApi userApi)
+            ICache cache)
         {
             _validatorLocator = validatorLocator;
             _logger = loggerFactory.GetLogger(this);
@@ -54,7 +50,6 @@ namespace Synthesis.InProductTrainingService.Controllers
             _cache = cache;
 
             _dbService = new InProductTrainingSqlService();
-            _userApi = userApi;
         }
 
         public async Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest inProductTrainingViewRequest, Guid userId)
@@ -228,6 +223,101 @@ namespace Synthesis.InProductTrainingService.Controllers
 
                 throw new Exception(errorMessage, ex);
             }
+        }
+
+
+
+        public async Task<WizardViewResponse> CreateWizardViewAsync(ViewedWizard model)
+        {
+            var validationResult = _validatorLocator.Validate<ViewedWizardValidator>(model);
+
+            if (!validationResult.IsValid)
+            {
+                _logger.Error("Validation failed while attempting to create a ViewedWizard resource.");
+                throw new ValidationFailedException(validationResult.Errors);
+            }
+
+            try
+            {
+                var existingWizards = await RetrieveViewedWizardsAsync(model.UserId);
+                var wizardsOfType = existingWizards.Where(w => w.WizardType == model.WizardType).ToList();
+
+                if (wizardsOfType.Count > 0)
+                {
+                    return new WizardViewResponse
+                    {
+                        WizardViews = wizardsOfType,
+                        ResultMessage = $"Wizard(s) already viewed by user '{model.UserId}'.",
+                        ResultCode = ResultCode.RecordAlreadyExists
+                    };
+                }
+
+                var viewedWizard = await _dbService.CreateViewedWizardAsync(model);
+                var key = KeyResolver.ViewedWizards(model.UserId);
+                await _cache.KeyDeleteAsync(key, CacheCommandOptions.FireAndForget);
+
+                return new WizardViewResponse
+                {
+                    WizardViews = new List<ViewedWizard> { viewedWizard },
+                    ResultMessage = $"Wizard marked as viewed successfully for user '{model.UserId}'.",
+                    ResultCode = ResultCode.Success
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("A ViewedWizard resource has not been created due to an unknown error.", ex);
+                return new WizardViewResponse()
+                {
+                    ResultMessage = ex.ToString(),
+                    ResultCode = ResultCode.Failed
+                };
+            }
+        }
+
+        public async Task<WizardViewResponse> GetWizardViewsByUserIdAsync(Guid userId)
+        {
+            var validationResult = _validatorLocator.Validate<UserIdValidator>(userId);
+
+            if (!validationResult.IsValid)
+            {
+                _logger.Error("Validation failed while attempting to retrieve a ViewedWizard resource.");
+                throw new ValidationFailedException(validationResult.Errors);
+            }
+
+            try
+            {
+                return new WizardViewResponse
+                {
+                    WizardViews = await RetrieveViewedWizardsAsync(userId),
+                    ResultMessage = $"Successfully retrieved ViewedWizards for user {userId}",
+                    ResultCode = ResultCode.Success
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("A ViewedWizard resource could not be retrieved due to an unknown error.", ex);
+                return new WizardViewResponse()
+                {
+                    WizardViews = null,
+                    ResultMessage = ex.ToString(),
+                    ResultCode = ResultCode.Failed
+                };
+            }
+        }
+
+        private async Task<List<ViewedWizard>> RetrieveViewedWizardsAsync(Guid userId)
+        {
+            var key = KeyResolver.ViewedWizards(userId);
+
+            if (_cache.KeyExists(key))
+            {
+                return await _cache.ItemGetAsync<List<ViewedWizard>>(key);
+            }
+
+            var wizardViews = await _dbService.GetViewedWizardsAsync(userId);
+            await _cache.ItemSetAsync(key, wizardViews, _expirationTime);
+
+            return wizardViews;
         }
     }
 }
