@@ -334,7 +334,20 @@ namespace Synthesis.InProductTrainingService
         private static void RegisterEvents(ContainerBuilder builder)
         {
             // Event Service registration.
-            builder.RegisterKafkaEventBusComponents(ServiceName);
+            builder.RegisterKafkaEventBusComponents(
+                ServiceName,
+                (metadata, bldr) =>
+                {
+                    bldr.RegisterType<EventServicePublishExtender>()
+                        .WithParameter(new ResolvedParameter(
+                            (p, c) => p.ParameterType == typeof(IEventService),
+                            (p, c) => RootContainer.Resolve<IEventService>()))
+                        .As<IEventService>()
+                        .InstancePerLifetimeScope();
+
+                    bldr.Register(c => metadata.ToRequestHeaders())
+                        .InstancePerRequest();
+                });
 
             builder
                 .RegisterType<EventHandlerLocator>()
@@ -342,7 +355,7 @@ namespace Synthesis.InProductTrainingService
                 .SingleInstance()
                 .AutoActivate();
 
-            // Use reflection to register all the IEventHandlers in the Synthesis.InProductTrainingService.EventHandlers namespace
+            // Use reflection to register all the IEventHandlers in the Synthesis.ProjectItemService.EventHandlers namespace
             var assembly = Assembly.GetAssembly(typeof(InProductTrainingModule));
             var types = assembly.GetTypes().Where(x => string.Equals(x.Namespace, "Synthesis.InProductTrainingService.EventHandlers", StringComparison.Ordinal)).ToArray();
             foreach (var type in types)
@@ -354,10 +367,13 @@ namespace Synthesis.InProductTrainingService
             }
 
             // register event service for events to be handled for every instance of this service
-            builder
-                .Register(c => new EventHandlerLocator(
-                    c.ResolveKeyed<IEventService>(Registration.PerInstanceEventServiceKey),
-                    new IEventHandlerBase[] { new SettingsInvalidateCacheEventHandler(c.Resolve<ISharedAppSettingsReader>()) }))
+            builder.RegisterType<SettingsInvalidateCacheEventHandler>().AsSelf();
+
+            builder.RegisterType<EventHandlerLocator>()
+                .WithParameter(new ResolvedParameter(
+                    (p, c) => p.ParameterType == typeof(IEventServiceConsumer),
+                    (p, c) => c.ResolveKeyed<IEventServiceConsumer>(Registration.PerInstanceEventServiceKey)))
+                .OnActivated(args => args.Instance.SubscribeEventHandler<SettingsInvalidateCacheEventHandler>("*", Configuration.Shared.EventNames.SettingsInvalidateCache))
                 .Keyed<IEventHandlerLocator>(Registration.PerInstanceEventServiceKey)
                 .SingleInstance()
                 .AutoActivate();
