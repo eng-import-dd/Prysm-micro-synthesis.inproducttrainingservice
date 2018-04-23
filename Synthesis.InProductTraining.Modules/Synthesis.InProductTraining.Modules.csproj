@@ -54,8 +54,8 @@
     <Reference Include="Confluent.Kafka, Version=0.11.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Confluent.Kafka.0.11.3\lib\net45\Confluent.Kafka.dll</HintPath>
     </Reference>
-    <Reference Include="Confluent.SchemaRegistry, Version=0.11.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Confluent.SchemaRegistry.0.11.3-ci-255\lib\net452\Confluent.SchemaRegistry.dll</HintPath>
+    <Reference Include="Confluent.SchemaRegistry, Version=0.11.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Confluent.SchemaRegistry.0.11.4\lib\net452\Confluent.SchemaRegistry.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
