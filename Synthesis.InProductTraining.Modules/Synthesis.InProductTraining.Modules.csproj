@@ -348,7 +348,6 @@
     <Compile Include="Models\InProductTrainingView.cs" />
     <Compile Include="Models\UserType.cs" />
     <Compile Include="Modules\InProductTrainingModule.cs" />
-    <Compile Include="Modules\InProductTrainingServiceHealthModule.cs" />
     <Compile Include="Owin\GlobalExceptionHandlerMiddleware.cs" />
     <Compile Include="InProductTrainingServiceBootstrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
