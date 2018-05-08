@@ -75,19 +75,23 @@ namespace Synthesis.InProductTrainingService.Controllers
                 var dtoForTrace = _serializer.SerializeToString(inProductTrainingViewRequest);
 
                 var cachedData = await _cache.SetMembersAsync<InProductTrainingViewResponse>(key);
-                var trainingOfType = cachedData?.Where(t =>
-                        t.InProductTrainingSubjectId == inProductTrainingViewRequest.InProductTrainingSubjectId &&
-                        t.Title == inProductTrainingViewRequest.Title &&
-                        t.UserId == userId)
-                    .FirstOrDefault();
-
-                if (trainingOfType != null)
+                // ReSharper disable once UseNullPropagation
+                if (cachedData != null)
                 {
-                    returnPayload = trainingOfType;
-                    returnMessage = CreateInProductTrainingViewReturnCode.RecordAlreadyExists.BuildResponseMessage(inProductTrainingViewRequest, userId);
-                    returnResultCode = ResultCode.RecordAlreadyExists;
+                    var trainingOfType = cachedData?.Where(t =>
+                            t.InProductTrainingSubjectId == inProductTrainingViewRequest.InProductTrainingSubjectId &&
+                            t.Title == inProductTrainingViewRequest.Title &&
+                            t.UserId == userId)
+                        .FirstOrDefault();
 
-                    _logger.Info($"Record not created because it already exists in cache. {dtoForTrace}");
+                    if (trainingOfType != null)
+                    {
+                        returnPayload = trainingOfType;
+                        returnMessage = CreateInProductTrainingViewReturnCode.RecordAlreadyExists.BuildResponseMessage(inProductTrainingViewRequest, userId);
+                        returnResultCode = ResultCode.RecordAlreadyExists;
+
+                        _logger.Info($"Record not created because it already exists in cache. {dtoForTrace}");
+                    }
                 }
 
                 var populateCache = false;
