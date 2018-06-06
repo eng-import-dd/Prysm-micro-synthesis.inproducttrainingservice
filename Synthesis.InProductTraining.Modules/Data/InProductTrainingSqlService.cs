@@ -62,7 +62,8 @@ namespace Synthesis.InProductTrainingService.Data
                         UserId = v.UserId,
                         Title = v.Title,
                         ClientApplicationId = v.InProductTrainingSubject.ClientApplicationId,
-                        TrainingMethod = v.InProductTrainingSubject.TrainingMethod
+                        TrainingMethod = v.InProductTrainingSubject.TrainingMethod,
+                        UserTypeId = v.UserTypeId
                     })
                     .ToListAsync();
             }
