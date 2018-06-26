@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IdentityModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Castle.Core.Internal;
 using Synthesis.Cache;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService.Validation;
@@ -13,6 +14,7 @@ using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.InProductTrainingService.Resolvers;
 using Synthesis.InProductTrainingService.Validators;
+using Synthesis.PrincipalService.InternalApi.Api;
 using Synthesis.Serialization;
 
 namespace Synthesis.InProductTrainingService.Controllers
@@ -30,6 +32,7 @@ namespace Synthesis.InProductTrainingService.Controllers
         private readonly ICache _cache;
         private readonly InProductTrainingSqlService _dbService;
         private readonly TimeSpan _expirationTime = TimeSpan.FromHours(8);
+        private readonly IUserApi _userApi;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="InProductTrainingController" /> class.
@@ -38,11 +41,13 @@ namespace Synthesis.InProductTrainingService.Controllers
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="serializer"></param>
         /// <param name="cache"></param>
+        /// <param name="userApi"></param>
         public InProductTrainingController(
             IValidatorLocator validatorLocator,
             ILoggerFactory loggerFactory,
             IObjectSerializer serializer,
-            ICache cache)
+            ICache cache,
+            IUserApi userApi)
         {
             _validatorLocator = validatorLocator;
             _logger = loggerFactory.GetLogger(this);
@@ -50,6 +55,8 @@ namespace Synthesis.InProductTrainingService.Controllers
             _cache = cache;
 
             _dbService = new InProductTrainingSqlService();
+
+            _userApi = userApi;
         }
 
         public async Task<InProductTrainingViewResponse> CreateInProductTrainingViewAsync(InProductTrainingViewRequest inProductTrainingViewRequest, Guid userId)
@@ -66,8 +73,11 @@ namespace Synthesis.InProductTrainingService.Controllers
             var returnMessage = "";
             var returnResultCode = ResultCode.Failed;
 
-            // TODO: Replace this with the username returned from the PrincipalService
-            const string createdByUserName = "Api";
+            var createdByUserName = _userApi.GetUserAsync(userId).Result.Payload.Username;
+            if (createdByUserName.IsNullOrEmpty())
+            {
+                createdByUserName = "Api";
+            }
 
             try
             {
