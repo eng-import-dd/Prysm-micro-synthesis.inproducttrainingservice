@@ -73,11 +73,8 @@ namespace Synthesis.InProductTrainingService.Controllers
             var returnMessage = "";
             var returnResultCode = ResultCode.Failed;
 
-            var createdByUserName = _userApi.GetUserAsync(userId).Result.Payload.Username;
-            if (createdByUserName.IsNullOrEmpty())
-            {
-                createdByUserName = "Api";
-            }
+            var userApiResult = await _userApi.GetUserAsync(userId);
+            var createdByUserName = userApiResult?.Payload.Username;
 
             try
             {
