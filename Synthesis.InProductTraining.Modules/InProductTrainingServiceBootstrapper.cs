@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using Microsoft.Owin;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Lifetime;
@@ -263,6 +265,23 @@ namespace Synthesis.InProductTrainingService
             RegisterEvents(builder);
 
             RegisterServiceSpecificRegistrations(builder);
+
+            // IRequestHeaders for ProjectGuestContext
+            builder.Register(c =>
+            {
+                var owinContext = c.ResolveOptional<IOwinContext>();
+                if (owinContext == null)
+                {
+                    return new RequestHeaders(Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>());
+                }
+
+                var headers = owinContext.Request.Headers
+                    .Select(h => new KeyValuePair<string, IEnumerable<string>>(h.Key, h.Value.AsEnumerable()));
+
+                return new RequestHeaders(headers);
+            })
+            .As<IRequestHeaders>()
+            .InstancePerLifetimeScope();
 
             return builder.Build();
         }
