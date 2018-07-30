@@ -73,7 +73,7 @@ namespace Synthesis.InProductTrainingService.Modules
             }
 
             await RequiresAccess()
-                .WithPrincipalIdExpansion(context => PrincipalId)
+                .WithPrincipalIdExpansion(context => newInProductTrainingViewRequest.UserId)
                 .ExecuteAsync(CancellationToken.None);
 
             try
@@ -131,7 +131,7 @@ namespace Synthesis.InProductTrainingService.Modules
             }
 
             await RequiresAccess()
-                .WithPrincipalIdExpansion(context => PrincipalId)
+                .WithPrincipalIdExpansion(context => newWizardView.UserId)
                 .ExecuteAsync(CancellationToken.None);
 
             try
