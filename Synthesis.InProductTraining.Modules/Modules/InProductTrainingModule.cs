@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nancy;
 using Nancy.ModelBinding;
-using Synthesis.Http.Microservice;
 using Synthesis.InProductTrainingService.Constants;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService.Metadata;
@@ -16,27 +15,23 @@ using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.Nancy.MicroService.Constants;
-using Synthesis.PrincipalService.InternalApi.Api;
 
 namespace Synthesis.InProductTrainingService.Modules
 {
     public sealed class InProductTrainingModule : SynthesisModule
     {
         private readonly IInProductTrainingController _inProductTrainingController;
-        private readonly IUserApi _userApi;
         private const string BaseInProductTrainingUrl = "/v1/inproducttraining";
         private const string BaseWizardsUrl = "/v1/wizards";
 
         public InProductTrainingModule(
             IInProductTrainingController inProductTrainingController,
             IMetadataRegistry metadataRegistry,
-            IUserApi userApi,
             IPolicyEvaluator policyEvaluator,
             ILoggerFactory loggerFactory)
             : base(InProductTrainingServiceBootstrapper.ServiceNameShort, metadataRegistry, policyEvaluator, loggerFactory)
         {
             _inProductTrainingController = inProductTrainingController;
-            _userApi = userApi;
 
             CreateRoute("CreateInProductTrainingView", HttpMethod.Post, $"{BaseInProductTrainingUrl}/viewed", CreateInProductTrainingViewAsync)
                 .Description("Create a new InProductTraining resource")
@@ -77,15 +72,8 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            var userResponse = await _userApi.GetUserAsync(newInProductTrainingViewRequest.UserId);
-            if (!userResponse.IsSuccess())
-            {
-                Logger.Error($"Error fetching user for tenant access {userResponse.ReasonPhrase}");
-                return await Negotiate.WithStatusCode((int)userResponse.ResponseCode);
-            }
-
             await RequiresAccess()
-                .WithTenantIdExpansion(ctx => userResponse.Payload.TenantId.GetValueOrDefault())
+                .WithPrincipalIdExpansion(context => PrincipalId)
                 .ExecuteAsync(CancellationToken.None);
 
             try
@@ -142,15 +130,8 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            var userResponse = await _userApi.GetUserAsync(newWizardView.UserId);
-            if (!userResponse.IsSuccess())
-            {
-                Logger.Error($"Error fetching user for tenant access {userResponse.ReasonPhrase}");
-                return await Negotiate.WithStatusCode((int)userResponse.ResponseCode);
-            }
-
             await RequiresAccess()
-                .WithTenantIdExpansion(ctx => userResponse.Payload.TenantId.GetValueOrDefault())
+                .WithPrincipalIdExpansion(context => PrincipalId)
                 .ExecuteAsync(CancellationToken.None);
 
             try
