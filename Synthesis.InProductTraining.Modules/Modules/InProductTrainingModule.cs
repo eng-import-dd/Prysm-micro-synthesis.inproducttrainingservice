@@ -1,14 +1,12 @@
 ﻿using System;
-using System.IdentityModel;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Nancy;
 using Nancy.ModelBinding;
-using Nancy.Security;
+using Synthesis.Http.Microservice;
 using Synthesis.InProductTrainingService.Constants;
 using Synthesis.Logging;
-using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Metadata;
 using Synthesis.Nancy.MicroService.Modules;
 using Synthesis.Nancy.MicroService.Validation;
@@ -18,25 +16,27 @@ using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
 using Synthesis.Nancy.MicroService.Constants;
+using Synthesis.PrincipalService.InternalApi.Api;
 
 namespace Synthesis.InProductTrainingService.Modules
 {
     public sealed class InProductTrainingModule : SynthesisModule
     {
         private readonly IInProductTrainingController _inProductTrainingController;
+        private readonly IUserApi _userApi;
         private const string BaseInProductTrainingUrl = "/v1/inproducttraining";
         private const string BaseWizardsUrl = "/v1/wizards";
 
         public InProductTrainingModule(
             IInProductTrainingController inProductTrainingController,
             IMetadataRegistry metadataRegistry,
+            IUserApi userApi,
             IPolicyEvaluator policyEvaluator,
             ILoggerFactory loggerFactory)
             : base(InProductTrainingServiceBootstrapper.ServiceNameShort, metadataRegistry, policyEvaluator, loggerFactory)
         {
             _inProductTrainingController = inProductTrainingController;
-
-            this.RequiresAuthentication();
+            _userApi = userApi;
 
             CreateRoute("CreateInProductTrainingView", HttpMethod.Post, $"{BaseInProductTrainingUrl}/viewed", CreateInProductTrainingViewAsync)
                 .Description("Create a new InProductTraining resource")
@@ -77,7 +77,16 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+            var userReesponse = await _userApi.GetUserAsync(newInProductTrainingViewRequest.UserId);
+            if (!userReesponse.IsSuccess())
+            {
+                Logger.Error($"Error fetching user for tenant access {userReesponse.ReasonPhrase}");
+                return await Negotiate.WithStatusCode((int)userReesponse.ResponseCode);
+            }
+
+            await RequiresAccess()
+                .WithTenantIdExpansion(ctx => userReesponse.Payload.TenantId.GetValueOrDefault())
+                .ExecuteAsync(CancellationToken.None);
 
             try
             {
@@ -133,7 +142,16 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+            var userReesponse = await _userApi.GetUserAsync(newWizardView.UserId);
+            if (!userReesponse.IsSuccess())
+            {
+                Logger.Error($"Error fetching user for tenant access {userReesponse.ReasonPhrase}");
+                return await Negotiate.WithStatusCode((int)userReesponse.ResponseCode);
+            }
+
+            await RequiresAccess()
+                .WithTenantIdExpansion(ctx => userReesponse.Payload.TenantId.GetValueOrDefault())
+                .ExecuteAsync(CancellationToken.None);
 
             try
             {

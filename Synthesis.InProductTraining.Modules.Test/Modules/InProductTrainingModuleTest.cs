@@ -4,6 +4,7 @@ using System.Threading;
 using FluentValidation.Results;
 using Moq;
 using Nancy;
+using Synthesis.Http.Microservice;
 using Synthesis.Nancy.MicroService.Constants;
 using Synthesis.Nancy.MicroService.Validation;
 using Synthesis.Policy.Models;
@@ -12,6 +13,8 @@ using Synthesis.InProductTrainingService.Constants;
 using Synthesis.InProductTrainingService.Controllers;
 using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.InternalApi.Requests;
+using Synthesis.PrincipalService.InternalApi.Api;
+using Synthesis.PrincipalService.InternalApi.Models;
 using Xunit;
 
 namespace Synthesis.InProductTrainingService.Modules.Test.Modules
@@ -19,12 +22,20 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
     public class InProductTrainingModuleTest : BaseModuleTests<InProductTrainingModule>
     {
         private readonly Mock<IInProductTrainingController> _inProductTrainingControllerMock = new Mock<IInProductTrainingController>();
+        private readonly Mock<IUserApi> _userApiMock = new Mock<IUserApi>();
 
         private readonly int _defaultClientApplicationId = 0;
         private readonly Guid _defaultUserId = Guid.NewGuid();
 
+        public InProductTrainingModuleTest()
+        {
+            _userApiMock
+                .Setup(x => x.GetUserAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(MicroserviceResponse.Create<User>(System.Net.HttpStatusCode.OK, User.Example()));
+        }
+
         /// <inheritdoc />
-        protected override List<object> BrowserDependencies => new List<object> { _inProductTrainingControllerMock.Object };
+        protected override List<object> BrowserDependencies => new List<object> { _inProductTrainingControllerMock.Object, _userApiMock.Object };
 
         [Fact]
         public async void GetInProductTrainingViewsReturnsBadRequestWhenControllerThrowsValidationException()
@@ -124,6 +135,21 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
             var actual = await UserTokenBrowser.Post("/v1/inproducttraining/viewed", BuildRequest);
 
             Assert.Equal(HttpStatusCode.OK, actual.StatusCode);
+        }
+
+        [Theory]
+        [InlineData(System.Net.HttpStatusCode.Unauthorized)]
+        [InlineData(System.Net.HttpStatusCode.NotFound)]
+        [InlineData(System.Net.HttpStatusCode.BadRequest)]
+        public async void CreateInProductTrainingViewReturnsPrincipalServiceResponseUponFailure(System.Net.HttpStatusCode statusCode)
+        {
+            _userApiMock
+                .Setup(x => x.GetUserAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(MicroserviceResponse.Create(statusCode, default(User)));
+
+            var actual = await UserTokenBrowser.Post("/v1/inproducttraining/viewed", BuildRequest);
+
+            Assert.Equal((int)statusCode, (int)actual.StatusCode);
         }
 
         [Fact]
@@ -232,6 +258,21 @@ namespace Synthesis.InProductTrainingService.Modules.Test.Modules
             var actual = await UserTokenBrowser.Post("/v1/wizards/viewed", BuildRequest);
 
             Assert.Equal(HttpStatusCode.OK, actual.StatusCode);
+        }
+
+        [Theory]
+        [InlineData(System.Net.HttpStatusCode.Unauthorized)]
+        [InlineData(System.Net.HttpStatusCode.NotFound)]
+        [InlineData(System.Net.HttpStatusCode.BadRequest)]
+        public async void CreateWizardViewReturnsPrincipalServiceResponseUponFailure(System.Net.HttpStatusCode statusCode)
+        {
+            _userApiMock
+                .Setup(x => x.GetUserAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(MicroserviceResponse.Create(statusCode, default(User)));
+
+            var actual = await UserTokenBrowser.Post("/v1/wizards/viewed", BuildRequest);
+
+            Assert.Equal((int)statusCode, (int)actual.StatusCode);
         }
 
         [Fact]
