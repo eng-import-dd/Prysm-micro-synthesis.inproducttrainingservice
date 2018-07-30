@@ -77,15 +77,15 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            var userReesponse = await _userApi.GetUserAsync(newInProductTrainingViewRequest.UserId);
-            if (!userReesponse.IsSuccess())
+            var userResponse = await _userApi.GetUserAsync(newInProductTrainingViewRequest.UserId);
+            if (!userResponse.IsSuccess())
             {
-                Logger.Error($"Error fetching user for tenant access {userReesponse.ReasonPhrase}");
-                return await Negotiate.WithStatusCode((int)userReesponse.ResponseCode);
+                Logger.Error($"Error fetching user for tenant access {userResponse.ReasonPhrase}");
+                return await Negotiate.WithStatusCode((int)userResponse.ResponseCode);
             }
 
             await RequiresAccess()
-                .WithTenantIdExpansion(ctx => userReesponse.Payload.TenantId.GetValueOrDefault())
+                .WithTenantIdExpansion(ctx => userResponse.Payload.TenantId.GetValueOrDefault())
                 .ExecuteAsync(CancellationToken.None);
 
             try
@@ -142,15 +142,15 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            var userReesponse = await _userApi.GetUserAsync(newWizardView.UserId);
-            if (!userReesponse.IsSuccess())
+            var userResponse = await _userApi.GetUserAsync(newWizardView.UserId);
+            if (!userResponse.IsSuccess())
             {
-                Logger.Error($"Error fetching user for tenant access {userReesponse.ReasonPhrase}");
-                return await Negotiate.WithStatusCode((int)userReesponse.ResponseCode);
+                Logger.Error($"Error fetching user for tenant access {userResponse.ReasonPhrase}");
+                return await Negotiate.WithStatusCode((int)userResponse.ResponseCode);
             }
 
             await RequiresAccess()
-                .WithTenantIdExpansion(ctx => userReesponse.Payload.TenantId.GetValueOrDefault())
+                .WithTenantIdExpansion(ctx => userResponse.Payload.TenantId.GetValueOrDefault())
                 .ExecuteAsync(CancellationToken.None);
 
             try
