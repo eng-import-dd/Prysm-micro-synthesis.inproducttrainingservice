@@ -72,9 +72,7 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            await RequiresAccess()
-                .WithPrincipalIdExpansion(context => newInProductTrainingViewRequest.UserId)
-                .ExecuteAsync(CancellationToken.None);
+            await RequiresAccess().ExecuteAsync(CancellationToken.None);
 
             try
             {
