@@ -1,14 +1,11 @@
 ﻿using System;
-using System.IdentityModel;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Nancy;
 using Nancy.ModelBinding;
-using Nancy.Security;
 using Synthesis.InProductTrainingService.Constants;
 using Synthesis.Logging;
-using Synthesis.Nancy.MicroService;
 using Synthesis.Nancy.MicroService.Metadata;
 using Synthesis.Nancy.MicroService.Modules;
 using Synthesis.Nancy.MicroService.Validation;
@@ -35,8 +32,6 @@ namespace Synthesis.InProductTrainingService.Modules
             : base(InProductTrainingServiceBootstrapper.ServiceNameShort, metadataRegistry, policyEvaluator, loggerFactory)
         {
             _inProductTrainingController = inProductTrainingController;
-
-            this.RequiresAuthentication();
 
             CreateRoute("CreateInProductTrainingView", HttpMethod.Post, $"{BaseInProductTrainingUrl}/viewed", CreateInProductTrainingViewAsync)
                 .Description("Create a new InProductTraining resource")
@@ -133,7 +128,9 @@ namespace Synthesis.InProductTrainingService.Modules
                 return Response.BadRequestBindingException(errorMessage, ex.Message);
             }
 
-            await RequiresAccess().ExecuteAsync(CancellationToken.None);
+            await RequiresAccess()
+                .WithPrincipalIdExpansion(context => newWizardView.UserId)
+                .ExecuteAsync(CancellationToken.None);
 
             try
             {
