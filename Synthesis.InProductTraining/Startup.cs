@@ -21,11 +21,11 @@ namespace Synthesis.InProductTrainingService
             app.UseAutofacLifetimeScopeInjector(InProductTrainingServiceBootstrapper.RootContainer);
 
             app.UseMiddlewareFromContainer<GlobalExceptionHandlerMiddleware>();
-            app.UseApplicationInsightsTracking();
             app.UseMiddlewareFromContainer<CorrelationScopeMiddleware>();
 
             // This middleware performs our authentication and populates the user principal.
             app.UseMiddlewareFromContainer<SynthesisAuthenticationMiddleware>();
+            app.UseApplicationInsightsTracking();
             app.UseMiddlewareFromContainer<ImpersonateTenantMiddleware>();
             app.UseMiddlewareFromContainer<GuestContextMiddleware>();
             app.UseStageMarker(PipelineStage.Authenticate);
