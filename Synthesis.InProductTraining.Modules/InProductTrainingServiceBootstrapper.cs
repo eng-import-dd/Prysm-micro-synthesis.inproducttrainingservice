@@ -247,13 +247,20 @@ namespace Synthesis.InProductTrainingService
                     (p, c) =>
                     {
                         var reader = c.Resolve<IAppSettingsReader>();
+                        var sslSetting = reader.SafeGetValue("Redis.General.Ssl", "false");
+                        var result = bool.TryParse(sslSetting, out var ssl);
+                        if (!result)
+                        {
+                            ssl = false;
+                        }
                         var redisOptions = new ConfigurationOptions
                         {
                             Password = reader.GetValue<string>("Redis.General.Key"),
                             AbortOnConnectFail = false,
                             SyncTimeout = RedisSyncTimeoutInMilliseconds,
                             ConnectTimeout = RedisConnectTimeoutInMilliseconds,
-                            ConnectRetry = RedisConnectRetryTimes
+                            ConnectRetry = RedisConnectRetryTimes,
+                            Ssl = ssl
                         };
                         redisOptions.EndPoints.Add(reader.GetValue<string>("Redis.General.Endpoint"));
                         return ConnectionMultiplexer.Connect(redisOptions);
