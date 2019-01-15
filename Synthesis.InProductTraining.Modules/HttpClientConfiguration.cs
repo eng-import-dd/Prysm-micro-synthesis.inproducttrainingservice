@@ -6,5 +6,8 @@ namespace Synthesis.InProductTrainingService
     {
         /// <inheritdoc />
         public bool TrustAllCerts => true;
+
+        /// <inheritdoc />
+        public int ConnectionLimit => 100;
     }
 }
