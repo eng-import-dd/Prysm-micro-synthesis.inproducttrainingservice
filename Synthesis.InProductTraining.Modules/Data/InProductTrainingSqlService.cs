@@ -1,18 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.Entity;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Synthesis.InProductTrainingService.InternalApi.Enums;
 using Synthesis.InProductTrainingService.InternalApi.Models;
 using Synthesis.InProductTrainingService.InternalApi.Responses;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Synthesis.InProductTrainingService.Data
 {
     public class InProductTrainingSqlService
     {
+        private IConfiguration _configuration;
+
+        public InProductTrainingSqlService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         public InProductTrainingViewResponse CreateInProductTrainingView(int inProductTrainingSubjectId, Guid userId, string title, int userTypeId, string createdByUserName, ref CreateInProductTrainingViewReturnCode returnCode)
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -27,7 +36,7 @@ namespace Synthesis.InProductTrainingService.Data
             SqlParameter resultCodeOutputParam;
             InProductTrainingViewResponse result;
 
-            using (var dc = new SynthesisDataContext())
+            using (var sdc = new SynthesisDataContext(new DbContextOptionsBuilder<SynthesisDataContext>().Options, _configuration))
             {
                 var inProductTrainingSubjectIdParam = new SqlParameter("@InProductTrainingSubjectId", inProductTrainingSubjectId);
                 var userIdParam = new SqlParameter("@UserId", userId);
@@ -36,14 +45,13 @@ namespace Synthesis.InProductTrainingService.Data
                 var createUserParam = new SqlParameter("@CreateUser", createdByUserName);
                 resultCodeOutputParam = new SqlParameter("@ResultCode", SqlDbType.Int) { Direction = ParameterDirection.Output };
 
-                result = dc.Database.SqlQuery<InProductTrainingViewResponse>("InsertInProductTrainingViews @InProductTrainingSubjectId, @UserID, @Title, @UserTypeId, @CreateUser, @ResultCode OUTPUT", inProductTrainingSubjectIdParam, userIdParam, titleParam, userTypeParam, createUserParam, resultCodeOutputParam).FirstOrDefault();
+                result = sdc.InProductTrainingViewResponses.FromSqlRaw("InsertInProductTrainingViews @InProductTrainingSubjectId, @UserID, @Title, @UserTypeId, @CreateUser, @ResultCode OUTPUT", inProductTrainingSubjectIdParam, userIdParam, titleParam, userTypeParam, createUserParam, resultCodeOutputParam).FirstOrDefault();
             }
-
+            
             if (!Enum.TryParse(resultCodeOutputParam.Value.ToString(), out returnCode))
             {
                 returnCode = CreateInProductTrainingViewReturnCode.CreateFailed;
             }
-
             return result;
         }
 
@@ -51,7 +59,7 @@ namespace Synthesis.InProductTrainingService.Data
         {
             List<InProductTrainingViewResponse> trainingViews;
 
-            using (var sdc = new SynthesisDataContext())
+            using (var sdc = new SynthesisDataContext(new DbContextOptionsBuilder<SynthesisDataContext>().Options, _configuration))
             {
                 trainingViews = await sdc.InProductTrainingViews
                     .Include(s => s.InProductTrainingSubject)
@@ -73,7 +81,7 @@ namespace Synthesis.InProductTrainingService.Data
 
         public async Task<List<ViewedWizard>> GetViewedWizardsAsync(Guid userId)
         {
-            using (var sdc = new SynthesisDataContext())
+            using (var sdc = new SynthesisDataContext(new DbContextOptionsBuilder<SynthesisDataContext>().Options, _configuration))
             {
                 return await sdc.ViewedWizards.Where(w => w.UserId == userId).ToListAsync();
             }
@@ -81,12 +89,12 @@ namespace Synthesis.InProductTrainingService.Data
 
         public async Task<ViewedWizard> CreateViewedWizardAsync(ViewedWizard wizardView)
         {
-            using (var dc = new SynthesisDataContext())
+            using (var sdc = new SynthesisDataContext(new DbContextOptionsBuilder<SynthesisDataContext>().Options, _configuration))
             {
-                dc.ViewedWizards.Add(wizardView);
-                await dc.SaveChangesAsync();
+                sdc.ViewedWizards.Add(wizardView);
+                await sdc.SaveChangesAsync();
 
-                return await dc.ViewedWizards.SingleAsync(x => x.UserId == wizardView.UserId && x.WizardType == wizardView.WizardType);
+                return await sdc.ViewedWizards.SingleAsync(x => x.UserId == wizardView.UserId && x.WizardType == wizardView.WizardType);
             }
         }
     }

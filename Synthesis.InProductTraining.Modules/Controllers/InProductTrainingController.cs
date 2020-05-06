@@ -4,6 +4,7 @@ using System.IdentityModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Castle.Core.Internal;
+using Microsoft.Extensions.Configuration;
 using Synthesis.Cache;
 using Synthesis.Logging;
 using Synthesis.Nancy.MicroService.Validation;
@@ -27,6 +28,7 @@ namespace Synthesis.InProductTrainingService.Controllers
     {
         // ReSharper disable once NotAccessedField.Local
         private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
         private readonly IValidatorLocator _validatorLocator;
         private readonly IObjectSerializer _serializer;
         private readonly ICache _cache;
@@ -39,22 +41,25 @@ namespace Synthesis.InProductTrainingService.Controllers
         /// </summary>
         /// <param name="validatorLocator">The validator locator.</param>
         /// <param name="loggerFactory">The logger factory.</param>
+        /// <param name="configuration">The configuration</param>
         /// <param name="serializer"></param>
         /// <param name="cache"></param>
         /// <param name="userApi"></param>
         public InProductTrainingController(
             IValidatorLocator validatorLocator,
             ILoggerFactory loggerFactory,
+            IConfiguration configuration,
             IObjectSerializer serializer,
             ICache cache,
             IUserApi userApi)
         {
             _validatorLocator = validatorLocator;
             _logger = loggerFactory.GetLogger(this);
+            _configuration = configuration;
             _serializer = serializer;
             _cache = cache;
 
-            _dbService = new InProductTrainingSqlService();
+            _dbService = new InProductTrainingSqlService(_configuration);
 
             _userApi = userApi;
         }

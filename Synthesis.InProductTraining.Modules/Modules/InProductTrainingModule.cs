@@ -29,7 +29,7 @@ namespace Synthesis.InProductTrainingService.Modules
             IMetadataRegistry metadataRegistry,
             IPolicyEvaluator policyEvaluator,
             ILoggerFactory loggerFactory)
-            : base(InProductTrainingServiceBootstrapper.ServiceNameShort, metadataRegistry, policyEvaluator, loggerFactory)
+            : base(ServiceInformation.ServiceNameShort, metadataRegistry, policyEvaluator, loggerFactory)
         {
             _inProductTrainingController = inProductTrainingController;
 
