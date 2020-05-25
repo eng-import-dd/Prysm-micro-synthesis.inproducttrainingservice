@@ -16,4 +16,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Synthesis.InProductTraining.Modules\Synthesis.InProductTraining.Modules.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="secrets\inproducttrainingsettings">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
