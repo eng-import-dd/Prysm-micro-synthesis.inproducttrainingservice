@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Autofac;
 using Synthesis.InProductTrainingService.Controllers;
+using Synthesis.Nancy.Autofac.Module.Configuration;
 using Synthesis.Nancy.Autofac.Module.Microservice;
 using Synthesis.PrincipalService.InternalApi.Api;
 using Module = Autofac.Module;
@@ -11,6 +12,7 @@ namespace Synthesis.InProductTrainingService
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterModule<ConfigurationAutofacModule>();
             builder.RegisterModule(new MicroserviceAutofacModule(ServiceInformation.ServiceName,
                 ServiceInformation.ServiceNameShort,
                 Assembly.GetAssembly(GetType()),
