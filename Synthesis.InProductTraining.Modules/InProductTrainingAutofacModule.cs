@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Nancy;
 using Synthesis.InProductTrainingService.Controllers;
+using Synthesis.InProductTrainingService.Modules;
 using Synthesis.Nancy.Autofac.Module.Configuration;
 using Synthesis.Nancy.Autofac.Module.Microservice;
 using Synthesis.PrincipalService.InternalApi.Api;
@@ -25,7 +26,7 @@ namespace Synthesis.InProductTrainingService
             builder.RegisterType<InProductTrainingController>().As<IInProductTrainingController>();
 
             // Nancy Module
-            builder.RegisterType<InProductTrainingAutofacModule>().As<INancyModule>();
+            builder.RegisterType<InProductTrainingModule>().As<INancyModule>();
         }
     }
 }
